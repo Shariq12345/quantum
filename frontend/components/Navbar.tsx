@@ -4,8 +4,8 @@ import { Menu, X, BarChart2 } from "lucide-react";
 import Image from "next/image";
 
 const navigation = [
-  { name: "Dashboard", href: "#" },
-  { name: "Predictions", href: "#" },
+  { name: "Dashboard", href: "/dashboard" },
+  { name: "Predictions", href: "/predict" },
   { name: "Analytics", href: "#" },
   { name: "Portfolio", href: "#" },
 ];

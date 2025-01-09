@@ -39,6 +39,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import StockChart from "@/components/stock-charts";
 
 // Register Chart.js components
 ChartJS.register(
@@ -118,7 +119,7 @@ export default function StockPrediction() {
         "http://localhost:5000/api/predict",
         { symbol: symbol.toUpperCase() }
       );
-      console.log(response);
+      console.log("Received data:", response.data);
       setPrediction(response.data.predicted_price);
       setHistoricalData(response.data.historical_data);
       setAdditionalInfo(response.data.additional_info);
@@ -130,6 +131,43 @@ export default function StockPrediction() {
       setIsLoading(false);
     }
   };
+
+  const formattedChartData = historicalData.map((row) => ({
+    time: new Date(row.timestamp).toISOString().split("T")[0], // Convert to yyyy-mm-dd
+    // time: new Date(row.timestamp).getTime() / 1000, // Convert to yyyy-mm-dd
+    open: row.open,
+    high: row.high,
+    low: row.low,
+    close: row.close,
+  }));
+
+  const formattedVolumeData = historicalData.map((row: any) => ({
+    time: new Date(row.timestamp).toISOString().split("T")[0], // Convert to yyyy-mm-dd
+    value: row.volume,
+  }));
+
+  const formattedSmaData = historicalData.map((row) => ({
+    time: new Date(row.timestamp).toISOString().split("T")[0],
+    value: additionalInfo?.moving_average_fast || 0,
+  }));
+
+  const formattedRsiData = historicalData.map((row) => ({
+    time: new Date(row.timestamp).toISOString().split("T")[0],
+    value: additionalInfo?.rsi || 0,
+  }));
+
+  const formattedMacdData = historicalData.map((row) => ({
+    time: new Date(row.timestamp).toISOString().split("T")[0],
+    value: additionalInfo?.macd || 0,
+  }));
+
+  const indicators = {
+    sma: formattedSmaData,
+    rsi: formattedRsiData,
+    macd: formattedMacdData,
+  };
+
+  console.log("Formatted Chart Data:", formattedChartData);
 
   const chartData = {
     labels: historicalData.map((row) => {
@@ -259,7 +297,6 @@ export default function StockPrediction() {
                       <TabsTrigger value="technical">Technical</TabsTrigger>
                       <TabsTrigger value="volume">Volume</TabsTrigger>
                       <TabsTrigger value="chart">Chart</TabsTrigger>
-                      {/* <TabsTrigger value="news">News</TabsTrigger> */}
                     </TabsList>
 
                     <TabsContent value="overview">
@@ -373,7 +410,6 @@ export default function StockPrediction() {
                                   Signal
                                 </span>
                                 <Badge variant="outline">
-                                  {/* {additionalInfo?.macd?.signal?.toFixed(2)} */}
                                   {additionalInfo?.macd_signal?.toFixed(2)}
                                 </Badge>
                               </div>
@@ -435,50 +471,12 @@ export default function StockPrediction() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="h-[400px]">
-                            <Line data={chartData} options={chartOptions} />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-
-                    <TabsContent value="news">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-xl">Latest News</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {news?.map((article, index) => (
-                              <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{
-                                  duration: 0.5,
-                                  delay: index * 0.1,
-                                }}
-                              >
-                                <a
-                                  href={article.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                                >
-                                  <h3 className="font-semibold">
-                                    {article.title}
-                                  </h3>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {article.description}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-2">
-                                    {new Date(
-                                      article.publishedAt
-                                    ).toLocaleDateString()}
-                                  </p>
-                                </a>
-                              </motion.div>
-                            ))}
+                          <div className="h-[500px]">
+                            <StockChart
+                              data={formattedChartData}
+                              volumeData={formattedVolumeData}
+                              indicators={indicators}
+                            />
                           </div>
                         </CardContent>
                       </Card>

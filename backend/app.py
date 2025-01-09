@@ -1,14 +1,14 @@
-from flask import Flask, jsonify, request
+import io
+import requests
+import os
+from flask import Flask, jsonify, request # type: ignore
 from flask_cors import CORS
 import numpy as np
 import pandas as pd
-import requests
-import io
 import logging
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import load_model
 import joblib
-import os
 from ta import add_all_ta_features
 import traceback
 from polygon import RESTClient
@@ -88,7 +88,7 @@ def add_technical_indicators(data):
         
         # Select relevant features
         selected_features = [
-            'close',  
+            'open', 'high', 'low', 'close', 
             'trend_sma_fast', 
             'trend_sma_slow', 
             'trend_macd',  
@@ -125,10 +125,10 @@ def preprocess_data(data):
         # Handle missing values first
         data = data.fillna(method='ffill').fillna(method='bfill')
         
-        # Separate price and indicators
-        price_data = data[['close']].values
-        indicator_columns = [col for col in data.columns if col != 'close']
-        indicator_data = data[indicator_columns].values
+        # Extract price data (open, high, low, close)
+        price_data = data[['open', 'high', 'low', 'close']].values
+        # Extract technical indicators (excluding price columns)
+        indicator_data = data.drop(['open', 'high', 'low', 'close'], axis=1).values
         
         # Log shapes for debugging
         logger.info(f"Price data shape: {price_data.shape}")
@@ -138,7 +138,7 @@ def preprocess_data(data):
         scaled_price = price_scaler.transform(price_data)
         scaled_indicators = indicator_scaler.transform(indicator_data)
         
-        # Combine scaled data
+        # Combine scaled price data and indicators
         scaled_data = np.hstack((scaled_price, scaled_indicators))
         logger.info(f"Final preprocessed data shape: {scaled_data.shape}")
         
@@ -153,8 +153,10 @@ def create_sequences(data, time_step=60):
     try:
         X, y = [], []
         for i in range(len(data) - time_step - 1):
+            # Include all features in the input sequence
             X.append(data[i:(i + time_step), :])
-            y.append(data[i + time_step, 0])
+            # Predict the 'close' price of the next time step
+            y.append(data[i + time_step, 3])  # Index 3 corresponds to 'close'
         X = np.array(X)
         y = np.array(y)
         logger.info(f"Created sequences with shape: {X.shape}")
@@ -202,13 +204,20 @@ def predict():
             
         # Make prediction
         try:
-            latest_sequence = X[-1:]
-            prediction = model.predict(latest_sequence)
-            predicted_price = float(price_scaler.inverse_transform([[prediction[0][0]]])[0][0])
-            logger.info(f"Predicted price: {predicted_price}")
+             latest_sequence = X[-1:]
+             prediction = model.predict(latest_sequence)
+                
+             # Pad the prediction with zeros for the other features (open, high, low)
+             # The scaler expects a 2D array with 4 features
+             padded_prediction = np.zeros((1, 4))  # Shape: (1, 4)
+             padded_prediction[0, 3] = prediction[0][0]  # Set the 'close' value
+                
+             # Inverse transform the padded prediction
+             predicted_price = float(price_scaler.inverse_transform(padded_prediction)[0, 3])  # Extract the 'close' value
+             logger.info(f"Predicted price: {predicted_price}")
         except Exception as e:
-            logger.error(f"Prediction error: {str(e)}")
-            return jsonify({'error': 'Error making prediction'}), 500
+             logger.error(f"Prediction error: {str(e)}")
+             return jsonify({'error': 'Error making prediction'}), 500
             
         # Prepare response data
         latest_data = feature_data.iloc[-1]
@@ -234,7 +243,7 @@ def predict():
             }
         }
         
-        historical_data = stock_data[['timestamp', 'close']].tail(30).to_dict('records')
+        historical_data = stock_data[['timestamp', 'open', 'high', 'low', 'close', 'volume']].tail(300).to_dict('records')
         
         response = {
             'predicted_price': predicted_price,
@@ -245,7 +254,7 @@ def predict():
         
         logger.info("Successfully generated prediction response")
         return jsonify(response)
-        
+    
     except Exception as e:
         logger.error(f"Unexpected error in predict endpoint: {str(e)}")
         logger.error(traceback.format_exc())

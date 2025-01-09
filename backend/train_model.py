@@ -56,7 +56,8 @@ def add_technical_indicators(data):
             close="close", volume="volume", fillna=True
         )
         selected_features = [
-            'close',  # Price
+            'open', 'high', 'low', 'close',
+            # 'close',  # Price
             'trend_sma_fast', 'trend_sma_slow', 'trend_macd',
             'trend_macd_signal', 'trend_macd_diff',  # MACD Histogram
             'momentum_rsi', 'momentum_stoch', 'momentum_stoch_signal',  # Stochastic Oscillator
@@ -75,20 +76,29 @@ def add_technical_indicators(data):
         return None
 
 def preprocess_data(data):
-    price_data = data[['close']].values
-    indicator_data = data.drop('close', axis=1).values
+    # Extract price data (open, high, low, close)
+    price_data = data[['open', 'high', 'low', 'close']].values
+    # Extract technical indicators (excluding price columns)
+    indicator_data = data.drop(['open', 'high', 'low', 'close'], axis=1).values
+
+    # Scale price data and indicators separately
     price_scaler = MinMaxScaler(feature_range=(0, 1))
     indicator_scaler = MinMaxScaler(feature_range=(0, 1))
+
     scaled_price = price_scaler.fit_transform(price_data)
     scaled_indicators = indicator_scaler.fit_transform(indicator_data)
+
+    # Combine scaled price data and indicators
     scaled_data = np.hstack((scaled_price, scaled_indicators))
     return scaled_data, price_scaler, indicator_scaler
 
 def create_sequences(data, time_step=60):
     X, y = [], []
     for i in range(len(data) - time_step - 1):
+        # Include all features in the input sequence
         X.append(data[i:(i + time_step), :])
-        y.append(data[i + time_step, 0])
+        # Predict the 'close' price of the next time step
+        y.append(data[i + time_step, 3])  # Index 3 corresponds to 'close'
     return np.array(X), np.array(y)
 
 def build_lstm_model(input_shape):
@@ -102,7 +112,7 @@ def build_lstm_model(input_shape):
         Dropout(0.2),
         Dense(32, activation='relu'),
         Dense(16, activation='relu'),
-        Dense(1)
+        Dense(1)  # Predict the 'close' price
     ])
     model.compile(optimizer=Adam(learning_rate=0.001), loss='huber', metrics=['mae', 'mse'])
     return model
