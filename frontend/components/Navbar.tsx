@@ -1,18 +1,32 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Menu, X, BarChart2 } from "lucide-react";
+import { Menu, X, BarChart2, ChevronDown } from "lucide-react";
 import Image from "next/image";
 
+const marketItems = [
+  { name: "Crypto", href: "/markets/crypto" },
+  { name: "Stock", href: "/markets/stocks" },
+  { name: "Forex", href: "/markets/forex" },
+  { name: "Commodities", href: "/markets/commodities" },
+];
+
 const navigation = [
-  { name: "Dashboard", href: "/dashboard" },
   { name: "Predictions", href: "/predict" },
-  { name: "Analytics", href: "#" },
-  { name: "Portfolio", href: "#" },
+  {
+    name: "Markets",
+    // href: "/markets",
+    items: marketItems,
+  },
+  // { name: "Portfolio", href: "#" },
+  { name: "News", href: "/news" },
 ];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -20,12 +34,20 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleMouseEnter = (name: string) => {
+    if (hoverTimeout) clearTimeout(hoverTimeout);
+    setActiveDropdown(name);
+  };
+
+  const handleMouseLeave = () => {
+    const timeout = setTimeout(() => setActiveDropdown(null), 200); // Add a small delay
+    setHoverTimeout(timeout);
+  };
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-slate-900/95 backdrop-blur-sm shadow-lg"
-          : "bg-transparent"
+        scrolled ? "bg-slate-900/95 backdrop-blur-sm shadow-lg" : "bg-slate-900"
       }`}
     >
       <nav className="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto">
@@ -55,13 +77,41 @@ export default function Navbar() {
 
         <div className="hidden lg:flex lg:gap-x-8">
           {navigation.map((item) => (
-            <a
+            <div
               key={item.name}
-              href={item.href}
-              className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              className="relative"
+              onMouseEnter={() => handleMouseEnter(item.name)}
+              onMouseLeave={handleMouseLeave}
             >
-              {item.name}
-            </a>
+              <a
+                href={item.href}
+                className="flex items-center gap-1 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              >
+                {item.name}
+                {item.items && (
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      activeDropdown === item.name ? "rotate-180" : ""
+                    }`}
+                  />
+                )}
+              </a>
+              {item.items && activeDropdown === item.name && (
+                <div className="absolute left-0 mt-2 w-48 rounded-xl bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <div className="p-2 space-y-1">
+                    {item.items.map((subItem) => (
+                      <a
+                        key={subItem.name}
+                        href={subItem.href}
+                        className="block px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                      >
+                        {subItem.name}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
 
@@ -106,13 +156,27 @@ export default function Navbar() {
           <div className="mt-6 flow-root">
             <div className="space-y-1 py-6">
               {navigation.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="block rounded-lg px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                >
-                  {item.name}
-                </a>
+                <div key={item.name}>
+                  <a
+                    href={item.href}
+                    className="block rounded-lg px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                  >
+                    {item.name}
+                  </a>
+                  {item.items && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      {item.items.map((subItem) => (
+                        <a
+                          key={subItem.name}
+                          href={subItem.href}
+                          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+                        >
+                          {subItem.name}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
               <div className="mt-6 pt-6 border-t border-gray-800">
                 <a
