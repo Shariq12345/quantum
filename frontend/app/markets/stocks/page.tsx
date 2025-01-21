@@ -239,6 +239,7 @@ const StockMarketPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
           <TabsContent value="tech-stocks">
             <Card>
               <CardHeader>
@@ -263,6 +264,7 @@ const StockMarketPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
           <TabsContent value="most-active">
             <Card>
               <CardHeader>
@@ -274,14 +276,37 @@ const StockMarketPage = () => {
               <CardContent>
                 <div className="space-y-4">
                   {activeStocks.map((stock) => (
-                    <Card
+                    <div
                       key={stock.symbol}
-                      className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                      className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
                     >
-                      <CardContent className="p-4">
-                        <StockRow stock={stock} />
-                      </CardContent>
-                    </Card>
+                      {/* Symbol */}
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-black dark:text-white text-lg">
+                          {stock.symbol}
+                        </h3>
+                      </div>
+
+                      {/* Volume */}
+                      <div className="flex-1 text-center">
+                        <p className="text-gray-700 dark:text-gray-400 text-sm">
+                          Volume
+                        </p>
+                        <p className="font-semibold text-black dark:text-white text-lg">
+                          {Number(stock.volume).toLocaleString()}
+                        </p>
+                      </div>
+
+                      {/* Trade Count */}
+                      <div className="flex-1 text-right">
+                        <p className="text-gray-700 dark:text-gray-400 text-sm">
+                          Trade Count
+                        </p>
+                        <p className="font-semibold text-black dark:text-white text-lg">
+                          {Number(stock.trade_count).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </CardContent>

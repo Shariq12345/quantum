@@ -1,25 +1,41 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Menu, X, BarChart2, ChevronDown } from "lucide-react";
+import {
+  Menu,
+  X,
+  BarChart2,
+  ChevronDown,
+  LineChart,
+  BarChart,
+  NewspaperIcon,
+} from "lucide-react";
 import Image from "next/image";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 const marketItems = [
   { name: "Crypto", href: "/markets/crypto" },
   { name: "Stock", href: "/markets/stocks" },
-  { name: "Forex", href: "/markets/forex" },
-  { name: "Commodities", href: "/markets/commodities" },
+  // { name: "Forex", href: "/markets/forex" },
+  // { name: "Commodities", href: "/markets/commodities" },
 ];
 
 const navigation = [
-  { name: "Predictions", href: "/predict" },
+  {
+    name: "Predictions",
+    href: "/predict",
+    icon: LineChart,
+  },
   {
     name: "Markets",
-    // href: "/markets",
     items: marketItems,
+    icon: BarChart,
   },
-  // { name: "Portfolio", href: "#" },
-  { name: "News", href: "/news" },
+  {
+    name: "News",
+    href: "/news",
+    icon: NewspaperIcon,
+  },
 ];
 
 export default function Navbar() {
@@ -87,6 +103,8 @@ export default function Navbar() {
                 href={item.href}
                 className="flex items-center gap-1 text-sm font-medium text-gray-300 hover:text-white transition-colors"
               >
+                {item.icon && <item.icon className="size-5 mr-2" />}
+
                 {item.name}
                 {item.items && (
                   <ChevronDown
@@ -116,18 +134,22 @@ export default function Navbar() {
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6 lg:items-center">
-          <a
-            href="#"
-            className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-          >
-            Sign in
-          </a>
-          <a
-            href="#"
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-blue-600 text-white hover:shadow-lg hover:shadow-emerald-500/25 transition-all hover:-translate-y-0.5"
-          >
-            Start Free Trial
-          </a>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                Sign in
+              </button>
+            </SignInButton>
+            <SignInButton>
+              <button className="text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-blue-600 text-white hover:shadow-lg hover:shadow-emerald-500/25 transition-all hover:-translate-y-0.5">
+                Start Free Trial
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
       </nav>
 
@@ -179,18 +201,22 @@ export default function Navbar() {
                 </div>
               ))}
               <div className="mt-6 pt-6 border-t border-gray-800">
-                <a
-                  href="#"
-                  className="block rounded-lg px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                >
-                  Sign in
-                </a>
-                <a
-                  href="#"
-                  className="mt-4 block rounded-lg px-3 py-2.5 text-base font-medium text-white bg-gradient-to-r from-emerald-500 to-blue-600 text-center hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
-                >
-                  Start Free Trial
-                </a>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
+
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button className="block rounded-lg px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                      Sign in
+                    </button>
+                  </SignInButton>
+                  <SignInButton>
+                    <button className="mt-4 block rounded-lg px-3 py-2.5 text-base font-medium text-white bg-gradient-to-r from-emerald-500 to-blue-600 text-center hover:shadow-lg hover:shadow-emerald-500/25 transition-all">
+                      Start Free Trial
+                    </button>
+                  </SignInButton>
+                </SignedOut>
               </div>
             </div>
           </div>

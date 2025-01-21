@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@alpacahq/alpaca-trade-api": "^3.1.2",
+    "@clerk/nextjs": "^6.9.15",
     "@headlessui/react": "^2.2.0",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-navigation-menu": "^1.2.3",
@@ -21,6 +22,7 @@
     "chart.js": "^4.4.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "convex": "^1.18.2",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.16.1",
     "fs": "^0.0.1-security",
