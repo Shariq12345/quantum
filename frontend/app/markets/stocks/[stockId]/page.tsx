@@ -27,12 +27,33 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
   const [latestPreviousClose, setLatestPreviousClose] = useState<number>(0);
   const [latestVolume, setLatestVolume] = useState<number>(0);
 
+  const [companyName, setCompanyName] = useState<string>("");
+
   // Helper function to get the current date at midnight in ISO format
   const getMidnightISODate = () => {
     const now = new Date(); // Get the current date and time
     now.setUTCHours(0, 0, 0, 0); // Set the time to midnight (00:00:00.000) in UTC
     now.setUTCDate(now.getUTCDate() - 3); // Subtract one day
     return now.toISOString(); // Convert to ISO string
+  };
+
+  // Fetch the company name
+  const fetchCompanyName = async (symbol: string) => {
+    try {
+      const response = await axios.get(
+        `https://ticker-2e1ica8b9.now.sh/keyword/${symbol}`
+      );
+      const data = response.data;
+
+      if (data.length > 0) {
+        setCompanyName(data[0].name);
+      } else {
+        setCompanyName(""); // Fallback to an empty string if no name is found
+      }
+    } catch (error) {
+      console.error("Error fetching company name:", error);
+      setCompanyName(""); // Fallback in case of error
+    }
   };
 
   // Fetch stock data based on symbol and timeframe
@@ -113,6 +134,7 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
   // Fetch initial stock data when the component mounts
   useEffect(() => {
     if (stockId) {
+      fetchCompanyName(stockId as string);
       fetchStockData(stockId as string);
     }
   }, [stockId]);
@@ -201,14 +223,16 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
   return (
     <div className="min-h-screen text-black p-6 pt-[120px]">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold mb-6">Stock Chart: {stockId}</h1>
+        <h1 className="text-3xl font-extrabold mb-6">
+          {companyName || stockId}
+        </h1>
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Chart Container */}
           <div className="flex-1">
             <div
               ref={crosshairInfoRef}
-              className="mt-2 p-2 text-black rounded-md text-sm flex space-x-2"
+              className="mt-2 p-2 text-black text-sm flex space-x-2"
             ></div>
             <div
               ref={chartContainerRef}
@@ -218,7 +242,7 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
           </div>
 
           {/* Trading Panel */}
-          <div className="lg:w-1/3">
+          <div className="lg:w-1/3 pt-10">
             <TradingPanel
               openPrice={latestOpenPrice}
               volume={latestVolume}

@@ -9,33 +9,44 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon } from "lucide-react";
+import { TrendingUpIcon } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+import { useToast } from "@/hooks/use-toast";
 
 interface TradingPanelProps {
   stockSymbol: string;
   currentPrice: number;
-  // previousClose: number;
   openPrice: number;
   volume: number;
-  // marketCap: number;
 }
 
 export default function TradingPanel({
   stockSymbol,
   currentPrice,
-  // previousClose,
   openPrice,
   volume,
-  // marketCap,
 }: TradingPanelProps) {
+  const { toast } = useToast();
   const [quantity, setQuantity] = useState<number>(0);
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
   const [limitPrice, setLimitPrice] = useState<number | null>(null);
+
+  const { user } = useUser();
+  const userId = user?.id;
+
+  // Fetch user funds
+  const getFundsByUserId = useQuery(api.funds.getFundsByUserId, {
+    userId: userId ?? "",
+  });
+
+  const userFunds = getFundsByUserId?.amount ?? 0;
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuantity(Number(e.target.value));
@@ -46,44 +57,50 @@ export default function TradingPanel({
   };
 
   const handleSubmit = (action: "buy" | "sell") => {
-    // Implement order submission logic here
-    console.log(
-      `${action.toUpperCase()} ${quantity} shares of ${stockSymbol} at ${
-        orderType === "market" ? "market price" : `$${limitPrice}`
-      }`
-    );
+    const price = orderType === "market" ? currentPrice : limitPrice || 0;
+    const totalCost = price * quantity;
+
+    if (action === "buy") {
+      if (totalCost > userFunds) {
+        toast({
+          title: "Insufficient funds to complete the purchase.",
+          description: "Please add more funds to your account.",
+        });
+        return;
+      }
+      toast({
+        title: `Successfully bought ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
+        description: `Your new balance is $${userFunds - totalCost}`,
+      });
+    } else if (action === "sell") {
+      toast({
+        title: `Successfully sold ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
+        description: `Your new balance is $${userFunds + totalCost}`,
+      });
+    }
+
+    // Reset form after submission
+    setQuantity(0);
+    setLimitPrice(null);
   };
 
-  // const priceChange = currentPrice - previousClose;
-  // const priceChangePercentage = (priceChange / previousClose) * 100;
+  const estimatedCost = (
+    (orderType === "market" ? currentPrice : limitPrice || 0) * quantity
+  ).toFixed(2);
 
   return (
     <Card className="w-full max-w-3xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 shadow-lg">
       <CardHeader className="space-y-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-3xl font-bold">{stockSymbol}</CardTitle>
-            <CardDescription className="text-lg"></CardDescription>
+            <CardTitle className="text-2xl font-bold">{stockSymbol}</CardTitle>
+            <CardDescription className="text-md">
+              Available Funds: ${userFunds.toFixed(2)}
+            </CardDescription>
           </div>
-          <Badge variant={"default"} className="text-lg py-1 px-2">
+          <Badge variant="default" className="text-lg py-1 px-2">
             ${currentPrice.toFixed(2)}
           </Badge>
-        </div>
-        <div className="flex items-center space-x-2 text-sm">
-          {/* <span
-            className={`flex items-center ${priceChange >= 0 ? "text-emerald-600" : "text-red-600"}`}
-          >
-            {priceChange >= 0 ? (
-              <ArrowUpIcon className="w-4 h-4 mr-1" />
-            ) : (
-              <ArrowDownIcon className="w-4 h-4 mr-1" />
-            )}
-            ${Math.abs(priceChange).toFixed(2)} (
-            {priceChangePercentage.toFixed(2)}%)
-          </span>
-          <span className="text-gray-500">
-            Previous Close: ${previousClose?.toFixed(2)}
-          </span> */}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -92,18 +109,10 @@ export default function TradingPanel({
             <span className="block text-gray-500">Open</span>
             <span className="font-semibold">${openPrice?.toFixed(2)}</span>
           </div>
-          {/* <div>
-            <span className="block text-gray-500">Prev Close</span>
-            <span className="font-semibold">${previousClose?.toFixed(2)}</span>
-          </div> */}
           <div>
             <span className="block text-gray-500">Volume</span>
             <span className="font-semibold">{volume?.toLocaleString()}</span>
           </div>
-          {/* <div>
-            <span className="block text-gray-500">52W Range</span>
-            <span className="font-semibold">$100.00 - $200.00</span>
-          </div> */}
         </div>
         <Tabs defaultValue="buy" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -178,14 +187,18 @@ export default function TradingPanel({
                   {orderType === "market" ? "market price" : `$${limitPrice}`}
                 </p>
                 <p className="text-sm text-blue-600 dark:text-blue-300">
-                  Estimated Cost: $
-                  {(
-                    (orderType === "market" ? currentPrice : limitPrice || 0) *
-                    quantity
-                  ).toFixed(2)}
+                  Estimated Cost: ${estimatedCost}
                 </p>
               </div>
-              <Button onClick={() => handleSubmit("buy")} className="w-full">
+              <Button
+                onClick={() => handleSubmit("buy")}
+                className="w-full"
+                disabled={
+                  quantity <= 0 ||
+                  (orderType === "limit" && (!limitPrice || limitPrice <= 0)) ||
+                  parseFloat(estimatedCost) > userFunds
+                }
+              >
                 Place Buy Order
               </Button>
             </div>
@@ -258,16 +271,16 @@ export default function TradingPanel({
                   {orderType === "market" ? "market price" : `$${limitPrice}`}
                 </p>
                 <p className="text-sm text-red-600 dark:text-red-300">
-                  Estimated Proceeds: $
-                  {(
-                    (orderType === "market" ? currentPrice : limitPrice || 0) *
-                    quantity
-                  ).toFixed(2)}
+                  Estimated Proceeds: ${estimatedCost}
                 </p>
               </div>
               <Button
                 onClick={() => handleSubmit("sell")}
                 className="w-full bg-red-500 hover:bg-red-600"
+                disabled={
+                  quantity <= 0 ||
+                  (orderType === "limit" && (!limitPrice || limitPrice <= 0))
+                }
               >
                 Place Sell Order
               </Button>
@@ -275,12 +288,12 @@ export default function TradingPanel({
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-between items-center text-sm text-gray-500">
+      {/* <CardFooter className="flex justify-between items-center text-sm text-gray-500">
         <span>Last updated: {new Date().toLocaleTimeString()}</span>
         <span className="flex items-center">
           <TrendingUpIcon className="w-4 h-4 mr-1" /> Real-time data
         </span>
-      </CardFooter>
+      </CardFooter> */}
     </Card>
   );
 }

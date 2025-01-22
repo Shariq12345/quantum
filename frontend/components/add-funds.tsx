@@ -13,7 +13,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CreditCard, DollarSign, Info, Wallet } from "lucide-react";
+import {
+  CircleDollarSign,
+  CreditCard,
+  DollarSign,
+  Info,
+  Wallet,
+} from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -107,7 +113,7 @@ export function AddFundsDialog() {
               Amount to Add
             </Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <CircleDollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
                 id="amount"
                 type="number"
