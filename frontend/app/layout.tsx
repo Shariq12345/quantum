@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
 import SyncUserConvex from "@/components/sync-user";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
         <ConvexClientProvider>
           <ClerkProvider>
             <SyncUserConvex />
+            <Toaster />
             <Navbar />
             {children}
           </ClerkProvider>

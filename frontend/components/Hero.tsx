@@ -94,7 +94,10 @@ export default function Hero() {
               </p>
 
               <div className="flex items-center gap-6">
-                <Button size="lg" className="group">
+                <Button
+                  size="lg"
+                  className="group bg-emerald-600 hover:bg-emerald-700"
+                >
                   Start Free Trial
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
@@ -192,8 +195,8 @@ export default function Hero() {
                           stat.label !== "Profit Ratio"
                             ? `${stat.value.toFixed(1)}%`
                             : stat.label === "Profit Ratio"
-                            ? `${stat.value.toFixed(1)}x`
-                            : stat.value}
+                              ? `${stat.value.toFixed(1)}x`
+                              : stat.value}
                         </p>
                         {hoveredIndex === i && (
                           <motion.div

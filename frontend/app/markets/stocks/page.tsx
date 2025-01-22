@@ -219,7 +219,7 @@ const StockMarketPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ArrowUpIcon className="w-6 h-6 text-green-500" />
+                  <ArrowUpIcon className="w-6 h-6 text-emerald-500" />
                   Top Movers
                 </CardTitle>
               </CardHeader>
@@ -269,7 +269,7 @@ const StockMarketPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-6 h-6 text-green-500" />
+                  <Activity className="w-6 h-6 text-emerald-500" />
                   Most Active Stocks
                 </CardTitle>
               </CardHeader>

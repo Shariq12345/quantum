@@ -308,14 +308,14 @@ export default function StockPrediction() {
                         </CardHeader>
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
                               <div className="flex items-center gap-2">
-                                <DollarSign className="h-5 w-5 text-green-600" />
-                                <h3 className="font-semibold text-green-800">
+                                <DollarSign className="h-5 w-5 text-emerald-600" />
+                                <h3 className="font-semibold text-emerald-800">
                                   Predicted Price
                                 </h3>
                               </div>
-                              <p className="text-2xl font-bold text-green-700 mt-2">
+                              <p className="text-2xl font-bold text-emerald-700 mt-2">
                                 ${prediction.toFixed(2)}
                               </p>
                             </div>
@@ -331,8 +331,8 @@ export default function StockPrediction() {
                                 historicalData[historicalData.length - 1]
                                   ?.close ? (
                                   <>
-                                    <ArrowUp className="h-5 w-5 text-green-600" />
-                                    <span className="text-green-600 font-semibold">
+                                    <ArrowUp className="h-5 w-5 text-emerald-600" />
+                                    <span className="text-emerald-600 font-semibold">
                                       Upward Trend
                                     </span>
                                   </>
@@ -368,8 +368,8 @@ export default function StockPrediction() {
                                     additionalInfo.rsi > 70
                                       ? "destructive"
                                       : additionalInfo.rsi < 30
-                                      ? "default"
-                                      : "secondary"
+                                        ? "default"
+                                        : "secondary"
                                   }
                                 >
                                   {additionalInfo?.rsi?.toFixed(2)}

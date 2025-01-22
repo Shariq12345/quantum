@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { AddFundsDialog } from "./add-funds";
 
 const marketItems = [
   { name: "Crypto", href: "/markets/crypto" },
@@ -135,6 +136,7 @@ export default function Navbar() {
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6 lg:items-center">
           <SignedIn>
+            <AddFundsDialog />
             <UserButton />
           </SignedIn>
 
@@ -202,6 +204,7 @@ export default function Navbar() {
               ))}
               <div className="mt-6 pt-6 border-t border-gray-800">
                 <SignedIn>
+                  <AddFundsDialog />
                   <UserButton />
                 </SignedIn>
 

@@ -71,7 +71,7 @@ export default function TradingPanel({
         </div>
         <div className="flex items-center space-x-2 text-sm">
           {/* <span
-            className={`flex items-center ${priceChange >= 0 ? "text-green-600" : "text-red-600"}`}
+            className={`flex items-center ${priceChange >= 0 ? "text-emerald-600" : "text-red-600"}`}
           >
             {priceChange >= 0 ? (
               <ArrowUpIcon className="w-4 h-4 mr-1" />

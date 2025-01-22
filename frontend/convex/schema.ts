@@ -7,6 +7,12 @@ export default defineSchema({
     price: v.number(),
     userId: v.string(),
   }),
+  funds: defineTable({
+    amount: v.number(),
+    userId: v.string(),
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_amount", ["amount"]),
   users: defineTable({
     name: v.string(),
     email: v.string(),
