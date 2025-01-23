@@ -11,11 +11,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUpIcon } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
@@ -46,7 +44,11 @@ export default function TradingPanel({
     userId: userId ?? "",
   });
 
-  const userFunds = getFundsByUserId?.amount ?? 0;
+  const buyStocks = useMutation(api.stock.buyStock);
+
+  const deductFunds = useMutation(api.funds.deductFunds);
+
+  let userFunds = getFundsByUserId?.amount ?? 0;
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuantity(Number(e.target.value));
@@ -56,7 +58,7 @@ export default function TradingPanel({
     setLimitPrice(Number(e.target.value));
   };
 
-  const handleSubmit = (action: "buy" | "sell") => {
+  const handleSubmit = async (action: "buy" | "sell") => {
     const price = orderType === "market" ? currentPrice : limitPrice || 0;
     const totalCost = price * quantity;
 
@@ -68,10 +70,31 @@ export default function TradingPanel({
         });
         return;
       }
-      toast({
-        title: `Successfully bought ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
-        description: `Your new balance is $${userFunds - totalCost}`,
-      });
+
+      try {
+        // Call the buyStocks mutation
+        await buyStocks({
+          symbol: stockSymbol,
+          price: price,
+          userId: userId ?? "",
+          quantity: quantity,
+        });
+
+        await deductFunds({
+          userId: userId ?? "",
+          amount: totalCost,
+        });
+
+        toast({
+          title: `Successfully bought ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
+          description: `Your new balance is $${userFunds - totalCost}`,
+        });
+      } catch (error) {
+        toast({
+          title: "Failed to buy stocks.",
+          description: "An error occurred while processing your order.",
+        });
+      }
     } else if (action === "sell") {
       toast({
         title: `Successfully sold ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
@@ -288,12 +311,6 @@ export default function TradingPanel({
           </TabsContent>
         </Tabs>
       </CardContent>
-      {/* <CardFooter className="flex justify-between items-center text-sm text-gray-500">
-        <span>Last updated: {new Date().toLocaleTimeString()}</span>
-        <span className="flex items-center">
-          <TrendingUpIcon className="w-4 h-4 mr-1" /> Real-time data
-        </span>
-      </CardFooter> */}
     </Card>
   );
 }

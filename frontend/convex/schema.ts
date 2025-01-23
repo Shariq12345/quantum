@@ -6,7 +6,8 @@ export default defineSchema({
     symbol: v.string(),
     price: v.number(),
     userId: v.string(),
-  }),
+    quantity: v.number(),
+  }).index("by_user_id", ["userId"]),
   funds: defineTable({
     amount: v.number(),
     userId: v.string(),
