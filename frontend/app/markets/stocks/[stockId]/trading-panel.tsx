@@ -31,24 +31,33 @@ export default function TradingPanel({
   openPrice,
   volume,
 }: TradingPanelProps) {
+  const { user } = useUser();
+  const userId = user?.id;
   const { toast } = useToast();
   const [quantity, setQuantity] = useState<number>(0);
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
   const [limitPrice, setLimitPrice] = useState<number | null>(null);
-
-  const { user } = useUser();
-  const userId = user?.id;
 
   // Fetch user funds
   const getFundsByUserId = useQuery(api.funds.getFundsByUserId, {
     userId: userId ?? "",
   });
 
+  let userFunds = getFundsByUserId?.amount ?? 0;
+
+  const depositFunds = useMutation(api.funds.depositFunds);
+
+  // BUY STOCKS
   const buyStocks = useMutation(api.stock.buyStock);
 
+  const sellStocks = useMutation(api.stock.sellStock);
+
+  // DEDUCT FUNDS
   const deductFunds = useMutation(api.funds.deductFunds);
 
-  let userFunds = getFundsByUserId?.amount ?? 0;
+  const purchasePrice = useQuery(api.stock.getPurchasePrice, {
+    symbol: stockSymbol,
+  });
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuantity(Number(e.target.value));
@@ -96,10 +105,39 @@ export default function TradingPanel({
         });
       }
     } else if (action === "sell") {
-      toast({
-        title: `Successfully sold ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
-        description: `Your new balance is $${userFunds + totalCost}`,
-      });
+      try {
+        if (!purchasePrice) {
+          toast({
+            title: "Failed to sell stocks.",
+            description: "Could not find the purchase price for the stock.",
+          });
+          return;
+        }
+
+        // Calculate profit or loss
+        const profitOrLoss = (price - purchasePrice) * quantity;
+
+        await sellStocks({
+          symbol: stockSymbol,
+          quantity: quantity,
+          userId: userId ?? "",
+        });
+
+        await depositFunds({
+          userId: userId ?? "",
+          amount: totalCost + profitOrLoss,
+        });
+
+        toast({
+          title: `Successfully sold ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
+          description: `Your new balance is $${userFunds + totalCost}`,
+        });
+      } catch (error) {
+        toast({
+          title: "Failed to sell stocks.",
+          description: "An error occurred while processing your order.",
+        });
+      }
     }
 
     // Reset form after submission

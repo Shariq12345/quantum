@@ -25,11 +25,11 @@ import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
 
-export function AddFundsDialog() {
+export function DepositFundsDialog() {
   const [amount, setAmount] = useState("");
   const { toast } = useToast(); // Initialize the toast hook
   const userId = useUser().user?.id;
-  const addFunds = useMutation(api.funds.addFunds);
+  const depositFunds = useMutation(api.funds.depositFunds);
   const getFundsByUserId = useQuery(api.funds.getFundsByUserId, {
     userId: userId ?? "",
   });
@@ -50,7 +50,7 @@ export function AddFundsDialog() {
 
     try {
       // Add funds to the user's account
-      await addFunds({
+      await depositFunds({
         userId: userId ?? "", // Ensure userId is a string
         amount: parseFloat(amount),
       });

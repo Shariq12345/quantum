@@ -33,7 +33,7 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
   const getMidnightISODate = () => {
     const now = new Date(); // Get the current date and time
     now.setUTCHours(0, 0, 0, 0); // Set the time to midnight (00:00:00.000) in UTC
-    now.setUTCDate(now.getUTCDate() - 3); // Subtract one day
+    now.setUTCDate(now.getUTCDate() - 1); // Subtract one day
     return now.toISOString(); // Convert to ISO string
   };
 
@@ -117,7 +117,7 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
       const response = await axios.request(options);
       const stockBar = response.data.bars[symbol]; // Get the single bar object
 
-      console.log("Latest Stock Data:", stockBar);
+      // console.log("Latest Stock Data:", stockBar);
 
       if (stockBar) {
         // Update state with the latest bar data

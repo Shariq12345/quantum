@@ -119,7 +119,7 @@ export default function StockPrediction() {
         "http://localhost:5000/api/predict",
         { symbol: symbol.toUpperCase() }
       );
-      console.log("Received data:", response.data);
+      // console.log("Received data:", response.data);
       setPrediction(response.data.predicted_price);
       setHistoricalData(response.data.historical_data);
       setAdditionalInfo(response.data.additional_info);
@@ -167,7 +167,7 @@ export default function StockPrediction() {
     macd: formattedMacdData,
   };
 
-  console.log("Formatted Chart Data:", formattedChartData);
+  // console.log("Formatted Chart Data:", formattedChartData);
 
   const chartData = {
     labels: historicalData.map((row) => {

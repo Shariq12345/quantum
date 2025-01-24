@@ -24,7 +24,7 @@ const CryptoIdPage = ({ params }: CryptoIdPageProps) => {
       const formattedSymbol = `${symbol}/USD`; // Append USD suffix dynamically
       const encodedSymbol = encodeURIComponent(formattedSymbol);
 
-      console.log("Encoded Symbol:", encodedSymbol);
+      // console.log("Encoded Symbol:", encodedSymbol);
       const options = {
         method: "GET",
         url: `https://data.alpaca.markets/v1beta3/crypto/us/bars?symbols=${encodedSymbol}&timeframe=5Min&limit=1000&sort=asc`,
