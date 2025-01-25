@@ -122,8 +122,8 @@ const CryptoMarketPage = () => {
         url: "https://data.alpaca.markets/v1beta1/screener/crypto/movers?top=12",
         headers: {
           accept: "application/json",
-          "APCA-API-KEY-ID": "PK37Y096H88LC39XDCGT",
-          "APCA-API-SECRET-KEY": "WFNKWsozTcdBeRfL3xbHUo4o8nmTkEgqCnP9aIIV",
+          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY,
+          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY,
         },
       };
 

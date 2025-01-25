@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { type BarData, createChart } from "lightweight-charts";
 import TradingPanel from "./trading-panel";
+import { Fundamentals } from "./fundamentals";
+import { OptionPanel } from "./option-panel";
 
 interface StockIdPageProps {
   params: { stockId: string };
@@ -67,8 +69,8 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
         )}&limit=1000&adjustment=raw&feed=sip&sort=asc`,
         headers: {
           accept: "application/json",
-          "APCA-API-KEY-ID": "PK37Y096H88LC39XDCGT",
-          "APCA-API-SECRET-KEY": "WFNKWsozTcdBeRfL3xbHUo4o8nmTkEgqCnP9aIIV",
+          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY,
+          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY,
         },
       };
 
@@ -109,8 +111,8 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
         url: `https://data.alpaca.markets/v2/stocks/bars/latest?symbols=${symbol}`,
         headers: {
           accept: "application/json",
-          "APCA-API-KEY-ID": "PK37Y096H88LC39XDCGT",
-          "APCA-API-SECRET-KEY": "WFNKWsozTcdBeRfL3xbHUo4o8nmTkEgqCnP9aIIV",
+          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY!,
+          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY!,
         },
       };
 
@@ -223,8 +225,16 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
   return (
     <div className="min-h-screen text-black p-6 pt-[120px]">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold mb-6">
-          {companyName || stockId}
+        <h1 className="text-3xl font-bold mb-6">
+          <div className="flex items-center justify-center">
+            <img
+              src={`https://financialmodelingprep.com/image-stock/${stockId}.png?apikey=${process.env.NEXT_PUBLIC_FMP_API_KEY}`}
+              width={40}
+              height={32}
+              className="mr-2" // Add margin to separate the logo and text
+            />
+            {companyName || stockId}
+          </div>
         </h1>
 
         <div className="flex flex-col lg:flex-row gap-6">
@@ -234,10 +244,7 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
               ref={crosshairInfoRef}
               className="mt-2 p-2 text-black text-sm flex space-x-2"
             ></div>
-            <div
-              ref={chartContainerRef}
-              className="w-full h-[500px] bg-black rounded-lg"
-            ></div>
+            <div ref={chartContainerRef} className="w-full h-[500px]"></div>
             {/* Crosshair Info Display */}
           </div>
 
@@ -251,6 +258,9 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
             />
           </div>
         </div>
+        <Fundamentals symbol={stockId as string} />
+
+        <OptionPanel symbol={stockId as string} />
       </div>
     </div>
   );

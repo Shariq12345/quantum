@@ -47,8 +47,8 @@ const NewsPage = () => {
         },
         headers: {
           accept: "application/json",
-          "APCA-API-KEY-ID": "PK37Y096H88LC39XDCGT",
-          "APCA-API-SECRET-KEY": "WFNKWsozTcdBeRfL3xbHUo4o8nmTkEgqCnP9aIIV",
+          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY,
+          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY,
         },
       };
 
@@ -170,7 +170,8 @@ const NewsPage = () => {
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-600 dark:text-gray-400 py-4 border-t border-gray-200 dark:border-gray-700">
-          Data provided by Alpaca Markets | © {new Date().getFullYear()} Quantum
+          Data provided by Alpaca Markets | © {new Date().getFullYear()}{" "}
+          Quantum
         </div>
       </div>
     </div>

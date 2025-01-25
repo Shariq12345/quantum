@@ -92,8 +92,8 @@ const StockMarketPage = () => {
         url: "https://data.alpaca.markets/v2/stocks/bars/latest?symbols=AAPL,MSFT,TSLA,NVDA",
         headers: {
           accept: "application/json",
-          "APCA-API-KEY-ID": "PK37Y096H88LC39XDCGT",
-          "APCA-API-SECRET-KEY": "WFNKWsozTcdBeRfL3xbHUo4o8nmTkEgqCnP9aIIV",
+          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY,
+          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY,
         },
       };
 
@@ -124,8 +124,8 @@ const StockMarketPage = () => {
         url: "https://data.alpaca.markets/v1beta1/screener/stocks/most-actives?by=volume&top=5",
         headers: {
           accept: "application/json",
-          "APCA-API-KEY-ID": "PK37Y096H88LC39XDCGT",
-          "APCA-API-SECRET-KEY": "WFNKWsozTcdBeRfL3xbHUo4o8nmTkEgqCnP9aIIV",
+          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY,
+          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY,
         },
       };
 
@@ -151,8 +151,8 @@ const StockMarketPage = () => {
         url: "https://data.alpaca.markets/v1beta1/screener/stocks/movers?top=10",
         headers: {
           accept: "application/json",
-          "APCA-API-KEY-ID": "PK37Y096H88LC39XDCGT",
-          "APCA-API-SECRET-KEY": "WFNKWsozTcdBeRfL3xbHUo4o8nmTkEgqCnP9aIIV",
+          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY,
+          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY,
         },
       };
 

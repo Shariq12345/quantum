@@ -9,14 +9,18 @@ import {
   LineChart,
   BarChart,
   NewspaperIcon,
+  Bitcoin,
+  ChartCandlestick,
 } from "lucide-react";
 import Image from "next/image";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { DepositFundsDialog } from "./deposit-funds";
+import { Button } from "./ui/button";
+import Link from "next/link";
 
 const marketItems = [
-  { name: "Crypto", href: "/markets/crypto" },
-  { name: "Stock", href: "/markets/stocks" },
+  { name: "Crypto", href: "/markets/crypto", icon: Bitcoin },
+  { name: "Stock", href: "/markets/stocks", icon: ChartCandlestick },
   // { name: "Forex", href: "/markets/forex" },
   // { name: "Commodities", href: "/markets/commodities" },
 ];
@@ -26,11 +30,6 @@ const navigation = [
     name: "Predictions",
     href: "/predict",
     icon: LineChart,
-  },
-  {
-    name: "Portfolio",
-    href: "/portfolio",
-    icon: BarChart2,
   },
   {
     name: "Markets",
@@ -127,8 +126,9 @@ export default function Navbar() {
                       <a
                         key={subItem.name}
                         href={subItem.href}
-                        className="block px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
                       >
+                        {subItem.icon && <subItem.icon className="w-4 h-4" />}
                         {subItem.name}
                       </a>
                     ))}
@@ -142,6 +142,11 @@ export default function Navbar() {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6 lg:items-center">
           <SignedIn>
             <DepositFundsDialog />
+            <Link href={"/portfolio"}>
+              <Button className="bg-white text-black hover:bg-gray-200">
+                Portfolio
+              </Button>
+            </Link>
             <UserButton />
           </SignedIn>
 
@@ -198,8 +203,9 @@ export default function Navbar() {
                         <a
                           key={subItem.name}
                           href={subItem.href}
-                          className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
                         >
+                          {subItem.icon && <subItem.icon className="w-4 h-4" />}
                           {subItem.name}
                         </a>
                       ))}
@@ -210,6 +216,11 @@ export default function Navbar() {
               <div className="mt-6 pt-6 border-t border-gray-800">
                 <SignedIn>
                   <DepositFundsDialog />
+                  <Link href={"/portfolio"}>
+                    <Button className="bg-white text-black hover:bg-gray-200">
+                      Portfolio
+                    </Button>
+                  </Link>
                   <UserButton />
                 </SignedIn>
 

@@ -48,14 +48,14 @@ export default function PortfolioPage() {
         (sum, stock) => sum + stock.quantity * stock.price,
         0
       );
-    //   const overallChange = getStocks.reduce(
-    //     (sum, stock) =>
-    //       sum + (stock.change * (stock.quantity * stock.price)) / total,
-    //     0
-    //   );
+      //   const overallChange = getStocks.reduce(
+      //     (sum, stock) =>
+      //       sum + (stock.change * (stock.quantity * stock.price)) / total,
+      //     0
+      //   );
 
       setTotalValue(total);
-    //   setPortfolioChange(overallChange);
+      //   setPortfolioChange(overallChange);
     }
   }, [getStocks]);
 
@@ -114,12 +114,6 @@ export default function PortfolioPage() {
                     />
                     <span className="text-xl">{stock.symbol}</span>
                   </CardTitle>
-                  {/* <Badge
-            variant={stock.change >= 0 ? "secondary" : "destructive"}
-            className="text-xs"
-          >
-            {stock.sector}
-          </Badge> */}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-slate-800 mb-2">
@@ -129,16 +123,6 @@ export default function PortfolioPage() {
                     <p className="text-xs text-slate-500">
                       Quantity: {stock.quantity}
                     </p>
-                    {/* <div
-              className={`text-xs font-semibold flex items-center ${stock.change >= 0 ? "text-green-600" : "text-red-600"}`}
-            >
-              {stock.change >= 0 ? (
-                <ArrowUpIcon className="w-4 h-4 mr-1" />
-              ) : (
-                <ArrowDownIcon className="w-4 h-4 mr-1" />
-              )}
-              {Math.abs(stock.change)}%
-            </div> */}
                   </div>
                 </CardContent>
               </Card>
