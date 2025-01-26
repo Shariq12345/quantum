@@ -11,6 +11,8 @@ import {
   NewspaperIcon,
   Bitcoin,
   ChartCandlestick,
+  GraduationCapIcon,
+  GlobeIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
@@ -39,7 +41,12 @@ const navigation = [
   {
     name: "News",
     href: "/news",
-    icon: NewspaperIcon,
+    icon: GlobeIcon,
+  },
+  {
+    name: "Learn",
+    href: "/learn",
+    icon: GraduationCapIcon,
   },
 ];
 

@@ -15,6 +15,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Quantum - Intelligent Stock Trading",
   description: "Trade stocks with the power of artificial intelligence.",
+  applicationName: "Quantum",
 };
 
 export default function RootLayout({
