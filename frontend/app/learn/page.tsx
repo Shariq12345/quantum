@@ -2,7 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
-import { YoutubeIcon } from "lucide-react";
+import {
+  BookmarkIcon,
+  MessageCircle,
+  MessageCircleIcon,
+  MessageCircleQuestionIcon,
+  YoutubeIcon,
+} from "lucide-react";
 
 // Data for the cards
 const cardData = [
@@ -34,6 +40,20 @@ const cardData = [
       "Watch educational videos on a variety of financial topics to help you learn more.",
     href: "/learn/videos",
     icon: <YoutubeIcon size={49} className="text-red-500" />,
+  },
+  {
+    title: "Beginner Guides",
+    description:
+      "Explore beginner guides to help you get started with investing.",
+    href: "/learn/beginner-guides",
+    icon: <BookmarkIcon size={49} className="text-green-500" />,
+  },
+  {
+    title: "Quizzes",
+    description:
+      "Test your knowledge with quizzes on various financial topics.",
+    href: "/learn/quizzes",
+    icon: <MessageCircleQuestionIcon size={49} className="text-yellow-500" />,
   },
   // Add more cards here as needed
 ];

@@ -213,7 +213,7 @@ export default function TradingPanel({
                     onChange={(e) =>
                       setOrderType(e.target.value as "market" | "limit")
                     }
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-600 focus:border-emerald-600 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
                     <option value="market">Market</option>
                     <option value="limit">Limit</option>
@@ -297,7 +297,7 @@ export default function TradingPanel({
                     onChange={(e) =>
                       setOrderType(e.target.value as "market" | "limit")
                     }
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-600 focus:border-emerald-600 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   >
                     <option value="market">Market</option>
                     <option value="limit">Limit</option>
