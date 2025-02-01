@@ -79,7 +79,7 @@ const NewsPage = () => {
             <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-emerald-400">
               Quantum Pulse
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-base text-gray-600 dark:text-gray-400 mt-2">
               Stay ahead with the latest market insights
             </p>
           </div>

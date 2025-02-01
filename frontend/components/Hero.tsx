@@ -183,7 +183,7 @@ export default function Hero() {
                     ].map((stat, i) => (
                       <motion.div
                         key={i}
-                        className="p-4 rounded-xl bg-gray-900 cursor-pointer"
+                        className="p-4 rounded-xl bg-gray-900 "
                         whileHover={{ scale: 1.05 }}
                         onHoverStart={() => setHoveredIndex(i)}
                         onHoverEnd={() => setHoveredIndex(null)}

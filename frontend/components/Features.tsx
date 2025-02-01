@@ -87,14 +87,14 @@ export function FeaturesSection() {
             Powered by Advanced AI
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-4xl font-bold text-white mb-6">
             Powerful Features for{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">
               Smart Investing
             </span>
           </h2>
 
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <p className="text-base text-gray-400 max-w-3xl mx-auto">
             Our AI-powered platform offers a comprehensive suite of advanced
             tools to give you the competitive edge in stock market analysis and
             prediction.

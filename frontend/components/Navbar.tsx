@@ -165,7 +165,7 @@ export default function Navbar() {
             </SignInButton>
             <SignInButton>
               <button className="text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-blue-600 text-white hover:shadow-lg hover:shadow-emerald-500/25 transition-all hover:-translate-y-0.5">
-                Start Free Trial
+                Free Trial
               </button>
             </SignInButton>
           </SignedOut>
@@ -239,7 +239,7 @@ export default function Navbar() {
                   </SignInButton>
                   <SignInButton>
                     <button className="mt-4 block rounded-lg px-3 py-2.5 text-base font-medium text-white bg-gradient-to-r from-emerald-500 to-blue-600 text-center hover:shadow-lg hover:shadow-emerald-500/25 transition-all">
-                      Start Free Trial
+                      Free Trial
                     </button>
                   </SignInButton>
                 </SignedOut>
