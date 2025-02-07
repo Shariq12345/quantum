@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import {
   BookmarkIcon,
+  Calculator,
   MessageCircle,
   MessageCircleIcon,
   MessageCircleQuestionIcon,
@@ -54,6 +55,12 @@ const cardData = [
       "Test your knowledge with quizzes on various financial topics.",
     href: "/learn/quizzes",
     icon: <MessageCircleQuestionIcon size={49} className="text-yellow-500" />,
+  },
+  {
+    title: "Tools",
+    description: "Access tools to help you manage your finances.",
+    href: "/learn/tools",
+    icon: <Calculator size={49} className="text-purple-500" />,
   },
   // Add more cards here as needed
 ];

@@ -7,6 +7,7 @@ import { type BarData, createChart } from "lightweight-charts";
 import TradingPanel from "./trading-panel";
 import { Fundamentals } from "./fundamentals";
 import { OptionPanel } from "./option-panel";
+import { NewsFeed } from "./news-feed";
 
 interface StockIdPageProps {
   params: { stockId: string };
@@ -261,6 +262,8 @@ const StockIdPage = ({ params }: StockIdPageProps) => {
         <Fundamentals symbol={stockId as string} />
 
         <OptionPanel symbol={stockId as string} />
+
+        <NewsFeed symbol={stockId as string} />
       </div>
     </div>
   );

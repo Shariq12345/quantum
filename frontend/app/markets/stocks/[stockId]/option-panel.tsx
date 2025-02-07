@@ -229,7 +229,11 @@ export const OptionPanel = ({ symbol }: OptionPanelProps) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button onClick={fetchOptionsData} disabled={loading}>
+          <Button
+            onClick={fetchOptionsData}
+            disabled={loading}
+            className="bg-emerald-600"
+          >
             <RefreshCw
               className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
             />
