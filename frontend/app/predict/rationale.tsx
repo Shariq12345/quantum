@@ -13,6 +13,19 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { Progress } from "@/components/ui/progress";
+
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 
 interface RationaleProps {
   currentPrice: number;
@@ -36,6 +49,138 @@ interface RationalePoint {
   text: string;
   type: RationaleType;
 }
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+// Add this new component for RSI visualization
+const RSIGauge = ({ value }: { value: number }) => {
+  return (
+    <div className="mt-2 space-y-2">
+      <div className="flex justify-between text-xs text-gray-600">
+        <span>Oversold</span>
+        <span>Neutral</span>
+        <span>Overbought</span>
+      </div>
+      <div className="relative h-2">
+        <Progress value={value} className="h-2" />
+        <div
+          className="absolute top-0 w-2 h-4 bg-blue-600 transform -translate-y-1"
+          style={{ left: `${value}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-gray-500">
+        <span>0</span>
+        <span>50</span>
+        <span>100</span>
+      </div>
+    </div>
+  );
+};
+
+// Add this new component for MACD visualization
+const MACDChart = ({ macd, signal }: { macd: number; signal: number }) => {
+  const data = {
+    labels: ["Previous", "Current"],
+    datasets: [
+      {
+        label: "MACD Line",
+        data: [macd - 0.5, macd],
+        borderColor: "rgb(75, 192, 192)",
+        tension: 0.4,
+      },
+      {
+        label: "Signal Line",
+        data: [signal - 0.5, signal],
+        borderColor: "rgb(255, 99, 132)",
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom" as const,
+      },
+    },
+  };
+
+  return (
+    <div className="h-40 mt-2">
+      <Line data={data} options={options} />
+    </div>
+  );
+};
+
+// Add this new component for Bollinger Bands visualization
+const BollingerBandsChart = ({
+  upper,
+  middle,
+  lower,
+  currentPrice,
+}: {
+  upper: number;
+  middle: number;
+  lower: number;
+  currentPrice: number;
+}) => {
+  const data = {
+    labels: ["Previous", "Current"],
+    datasets: [
+      {
+        label: "Upper Band",
+        data: [upper - 1, upper],
+        borderColor: "rgba(255, 99, 132, 0.5)",
+        fill: false,
+      },
+      {
+        label: "Middle Band",
+        data: [middle - 1, middle],
+        borderColor: "rgba(54, 162, 235, 0.5)",
+        fill: false,
+      },
+      {
+        label: "Lower Band",
+        data: [lower - 1, lower],
+        borderColor: "rgba(75, 192, 192, 0.5)",
+        fill: false,
+      },
+      {
+        label: "Price",
+        data: [currentPrice - 1, currentPrice],
+        borderColor: "rgba(255, 206, 86, 1)",
+        pointBackgroundColor: "rgba(255, 206, 86, 1)",
+        pointRadius: 5,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom" as const,
+      },
+    },
+  };
+
+  return (
+    <div className="h-40 mt-2">
+      <Line data={data} options={options} />
+    </div>
+  );
+};
 
 const PredictionRationale = ({
   currentPrice,
@@ -202,6 +347,33 @@ const PredictionRationale = ({
                 <p className="text-sm text-gray-600 pl-6">
                   {getExplanation(rationale.key)}
                 </p>
+
+                {/* Add visual components based on rationale type */}
+                {rationale.key.startsWith("RSI") && (
+                  <div className="mt-4 px-6">
+                    <RSIGauge value={technicalIndicators.rsi} />
+                  </div>
+                )}
+
+                {rationale.key.startsWith("MACD") && (
+                  <div className="mt-4 px-6">
+                    <MACDChart
+                      macd={technicalIndicators.macd}
+                      signal={technicalIndicators.macd_signal}
+                    />
+                  </div>
+                )}
+
+                {rationale.key.startsWith("BB") && (
+                  <div className="mt-4 px-6">
+                    <BollingerBandsChart
+                      upper={technicalIndicators.bollinger_bands.upper}
+                      middle={technicalIndicators.bollinger_bands.middle}
+                      lower={technicalIndicators.bollinger_bands.lower}
+                      currentPrice={currentPrice}
+                    />
+                  </div>
+                )}
               </AccordionContent>
             </AccordionItem>
           ))}
