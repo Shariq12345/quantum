@@ -10,50 +10,42 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Calendar, Globe } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RefreshCw, Search, Calendar, Globe } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-// import NewsFilter from "./news-filter";
 import { format } from "date-fns";
 
 interface NewsArticle {
-  id: number;
-  author: string;
-  created_at: string;
-  headline: string;
-  summary: string;
+  source: { id: string | null; name: string };
+  author: string | null;
+  title: string;
+  description: string | null;
   url: string;
-  source: string;
-  images: { size: string; url: string }[];
-  symbols: string[];
+  urlToImage: string | null;
+  publishedAt: string;
+  content: string | null;
 }
 
 const NewsPage = () => {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("market");
 
   const fetchNews = async () => {
     setIsLoading(true);
     try {
-      const options = {
-        method: "GET",
-        url: "https://data.alpaca.markets/v1beta1/news",
-        params: {
-          start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-          end: new Date().toISOString(),
-          sort: "desc",
-          limit: 50,
-        },
-        headers: {
-          accept: "application/json",
-          "APCA-API-KEY-ID": process.env.NEXT_PUBLIC_ALPACA_API_KEY,
-          "APCA-API-SECRET-KEY": process.env.NEXT_PUBLIC_ALPACA_SECRET_KEY,
-        },
-      };
-
-      const response = await axios.request(options);
-      setNews(response.data.news);
+      const apiUrl = getApiUrl(filter);
+      const response = await axios.get(apiUrl);
+      setNews(response.data.articles);
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (error) {
       console.error("Error fetching news:", error);
@@ -61,14 +53,37 @@ const NewsPage = () => {
     setIsLoading(false);
   };
 
+  const getApiUrl = (filter: string) => {
+    switch (filter) {
+      case "bitcoin":
+        return `https://newsapi.org/v2/everything?q=bitcoin&apiKey=a9197c465fcd48898b38ee4d46`;
+      case "apple":
+        return `https://newsapi.org/v2/everything?q=apple&from=2025-02-06&to=2025-02-06&sortBy=popularity&apiKey=a9197c465fcd48898b38ee4d46e34dd2`;
+      case "tech":
+        return `https://newsapi.org/v2/everything?domains=techcrunch.com,thenextweb.com&apiKey=a9197c465fcd48898b38ee4d46e34dd2`;
+      default:
+        return `https://newsapi.org/v2/top-headlines?q=market&apiKey=a9197c465fcd48898b38ee4d46e34dd2`;
+    }
+  };
+
   useEffect(() => {
     fetchNews();
-  }, []);
+  }, [filter]);
 
-  const filteredNews = news.filter((article) => {
-    if (filter === "all") return true;
-    return article.symbols.includes(filter);
-  });
+  const handleSearch = async () => {
+    if (!query) return;
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `https://newsapi.org/v2/everything?q=${query}&apiKey=a9197c465fcd48898b38ee4d46e34dd2`
+      );
+      setNews(response.data.articles);
+      setLastUpdated(new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+    }
+    setIsLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 pt-[7rem] text-gray-900 dark:text-gray-100">
@@ -100,8 +115,37 @@ const NewsPage = () => {
           </div>
         </div>
 
-        {/* News Filter */}
-        {/* <NewsFilter filter={filter} setFilter={setFilter} /> */}
+        {/* Search and Filter */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center w-full md:w-1/2 space-x-2">
+            <Input
+              placeholder="Search for news..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="bg-white dark:bg-gray-800"
+            />
+            <Button
+              onClick={handleSearch}
+              className="bg-emerald-600 hover:bg-emerald-700 
+              hover:transition-all hover:duration-300 ease-in-out
+              "
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Search
+            </Button>
+          </div>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-full md:w-1/3 bg-white dark:bg-gray-800">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="market">Market News</SelectItem>
+              <SelectItem value="bitcoin">Bitcoin News</SelectItem>
+              <SelectItem value="apple">Apple News</SelectItem>
+              <SelectItem value="tech">TechCrunch & The Next Web</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* News Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,21 +166,18 @@ const NewsPage = () => {
                     </CardContent>
                   </Card>
                 ))
-            : filteredNews.map((article) => (
+            : news.map((article, index) => (
                 <Card
-                  key={article.id}
+                  key={index}
                   className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group"
                 >
                   <CardHeader className="p-0 overflow-hidden">
                     <img
                       src={
-                        article.images.length > 0
-                          ? article.images.find((img) => img.size === "large")
-                              ?.url ||
-                            "https://placehold.co/384x192?text=No+Image+Available"
-                          : "https://placehold.co/384x192?text=No+Image+Available"
+                        article.urlToImage ||
+                        "https://placehold.co/384x192?text=No+Image+Available"
                       }
-                      alt={article.headline}
+                      alt={article.title}
                       className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </CardHeader>
@@ -147,20 +188,20 @@ const NewsPage = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {article.headline}
+                        {article.title}
                       </a>
                     </CardTitle>
                     <CardDescription className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      {article.summary || "No summary available."}
+                      {article.description || "No description available."}
                     </CardDescription>
                     <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-500">
                       <div className="flex items-center">
                         <Globe className="w-4 h-4 mr-1" />
-                        {article.source}
+                        {article.source.name}
                       </div>
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {format(new Date(article.created_at), "MMM d, yyyy")}
+                        {format(new Date(article.publishedAt), "MMM d, yyyy")}
                       </div>
                     </div>
                   </CardContent>
@@ -170,8 +211,7 @@ const NewsPage = () => {
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-600 dark:text-gray-400 py-4 border-t border-gray-200 dark:border-gray-700">
-          Data provided by Alpaca Markets | © {new Date().getFullYear()}{" "}
-          Quantum
+          Data provided by NewsAPI | © {new Date().getFullYear()} Quantum
         </div>
       </div>
     </div>

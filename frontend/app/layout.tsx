@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -8,7 +8,11 @@ import { ConvexClientProvider } from "@/components/convex-client-provider";
 import SyncUserConvex from "@/components/sync-user";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({
+// const inter = Inter({
+//   subsets: ["latin"],
+// });
+
+const space = Space_Grotesk({
   subsets: ["latin"],
 });
 
@@ -25,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${space.className} antialiased`}>
         <ConvexClientProvider>
           <ClerkProvider>
             <SyncUserConvex />

@@ -36,6 +36,7 @@ import {
 import { motion } from "framer-motion";
 import StockChart from "@/components/stock-charts";
 import DisclaimerSection from "./disclaimer";
+import PredictionRationale from "./rationale";
 
 // Register Chart.js components
 ChartJS.register(
@@ -307,6 +308,16 @@ export default function StockPrediction() {
                           </div>
                         </CardContent>
                       </Card>
+
+                      <div className="mt-6">
+                        <PredictionRationale
+                          currentPrice={
+                            historicalData[historicalData.length - 1]?.close
+                          }
+                          predictedPrice={prediction}
+                          technicalIndicators={additionalInfo}
+                        />
+                      </div>
                     </TabsContent>
 
                     <TabsContent value="technical">
