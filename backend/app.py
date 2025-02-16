@@ -37,7 +37,7 @@ except Exception as e:
     logger.error(traceback.format_exc())
     raise
 
-API_KEY = os.getenv('VANTAGE_API_KEY')
+
 client = RESTClient(api_key="jCQvtKFC39SWJprdqxyiXFpac9UHB9K1")
 
 def fetch_stock_data(symbol):

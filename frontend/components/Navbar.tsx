@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
+import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
@@ -8,11 +9,10 @@ import {
   ChevronDown,
   LineChart,
   BarChart,
-  NewspaperIcon,
+  GlobeIcon,
   Bitcoin,
   ChartCandlestick,
   GraduationCapIcon,
-  GlobeIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
@@ -23,38 +23,20 @@ import Link from "next/link";
 const marketItems = [
   { name: "Crypto", href: "/markets/crypto", icon: Bitcoin },
   { name: "Stock", href: "/markets/stocks", icon: ChartCandlestick },
-  // { name: "Forex", href: "/markets/forex" },
-  // { name: "Commodities", href: "/markets/commodities" },
 ];
 
 const navigation = [
-  {
-    name: "Predictions",
-    href: "/predict",
-    icon: LineChart,
-  },
-  {
-    name: "Markets",
-    items: marketItems,
-    icon: BarChart,
-  },
-  {
-    name: "News",
-    href: "/news",
-    icon: GlobeIcon,
-  },
-  {
-    name: "Learn",
-    href: "/learn",
-    icon: GraduationCapIcon,
-  },
+  { name: "Prediction", href: "/predict", icon: LineChart },
+  { name: "Markets", items: marketItems, icon: BarChart },
+  { name: "News", href: "/news", icon: GlobeIcon },
+  { name: "Learn", href: "/learn", icon: GraduationCapIcon },
 ];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -62,14 +44,15 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href);
+
   const handleMouseEnter = (name: string) => {
-    if (hoverTimeout) clearTimeout(hoverTimeout);
     setActiveDropdown(name);
   };
 
   const handleMouseLeave = () => {
-    const timeout = setTimeout(() => setActiveDropdown(null), 200); // Add a small delay
-    setHoverTimeout(timeout);
+    setActiveDropdown(null);
   };
 
   return (
@@ -80,18 +63,10 @@ export default function Navbar() {
     >
       <nav className="flex items-center justify-between p-6 lg:px-8 max-w-7xl mx-auto">
         <div className="flex lg:flex-1">
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="flex items-center justify-center">
-              <Image
-                src="/logo.svg"
-                className=""
-                height={30}
-                width={30}
-                alt="Logo"
-              />
-            </div>
+          <Link href="/" className="flex items-center gap-2 group">
+            <Image src="/logo.svg" height={30} width={30} alt="Logo" />
             <span className="text-lg font-bold text-white">Quantum</span>
-          </a>
+          </Link>
         </div>
 
         <div className="flex lg:hidden">
@@ -111,12 +86,15 @@ export default function Navbar() {
               onMouseEnter={() => handleMouseEnter(item.name)}
               onMouseLeave={handleMouseLeave}
             >
-              <a
-                href={item.href}
-                className="flex items-center gap-1 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              <Link
+                href={item.href || "#"}
+                className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+                  isActive(item.href || "#")
+                    ? "text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
               >
-                {item.icon && <item.icon className="size-5 mr-2" />}
-
+                {item.icon && <item.icon className="w-5 h-5 mr-2" />}
                 {item.name}
                 {item.items && (
                   <ChevronDown
@@ -125,19 +103,23 @@ export default function Navbar() {
                     }`}
                   />
                 )}
-              </a>
+              </Link>
               {item.items && activeDropdown === item.name && (
-                <div className="absolute left-0 mt-2 w-48 rounded-xl bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div className="absolute left-0 mt-2 w-48 rounded-xl bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5">
                   <div className="p-2 space-y-1">
                     {item.items.map((subItem) => (
-                      <a
+                      <Link
                         key={subItem.name}
                         href={subItem.href}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isActive(subItem.href)
+                            ? "bg-slate-700 text-white"
+                            : "text-gray-300 hover:bg-slate-700 hover:text-white"
+                        }`}
                       >
                         {subItem.icon && <subItem.icon className="w-4 h-4" />}
                         {subItem.name}
-                      </a>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -156,98 +138,20 @@ export default function Navbar() {
             </Link>
             <UserButton />
           </SignedIn>
-
           <SignedOut>
             <SignInButton mode="modal">
-              <button className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+              <button className="text-sm font-medium text-gray-300 hover:text-white">
                 Sign in
               </button>
             </SignInButton>
             <SignInButton>
-              <button className="text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-blue-600 text-white hover:shadow-lg hover:shadow-emerald-500/25 transition-all hover:-translate-y-0.5">
+              <button className="text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-blue-600 text-white hover:shadow-lg transition-all">
                 Free Trial
               </button>
             </SignInButton>
           </SignedOut>
         </div>
       </nav>
-
-      <Dialog
-        as="div"
-        open={mobileMenuOpen}
-        onClose={setMobileMenuOpen}
-        className="lg:hidden"
-      >
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-slate-900 px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-          <div className="flex items-center justify-between">
-            <a href="/" className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-blue-600">
-                <BarChart2 className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-white">Quantum</span>
-            </a>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <div className="mt-6 flow-root">
-            <div className="space-y-1 py-6">
-              {navigation.map((item) => (
-                <div key={item.name}>
-                  <a
-                    href={item.href}
-                    className="block rounded-lg px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                  >
-                    {item.name}
-                  </a>
-                  {item.items && (
-                    <div className="ml-4 mt-1 space-y-1">
-                      {item.items.map((subItem) => (
-                        <a
-                          key={subItem.name}
-                          href={subItem.href}
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
-                        >
-                          {subItem.icon && <subItem.icon className="w-4 h-4" />}
-                          {subItem.name}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-              <div className="mt-6 pt-6 border-t border-gray-800">
-                <SignedIn>
-                  <DepositFundsDialog />
-                  <Link href={"/portfolio"}>
-                    <Button className="bg-white text-black hover:bg-gray-200">
-                      Portfolio
-                    </Button>
-                  </Link>
-                  <UserButton />
-                </SignedIn>
-
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <button className="block rounded-lg px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
-                      Sign in
-                    </button>
-                  </SignInButton>
-                  <SignInButton>
-                    <button className="mt-4 block rounded-lg px-3 py-2.5 text-base font-medium text-white bg-gradient-to-r from-emerald-500 to-blue-600 text-center hover:shadow-lg hover:shadow-emerald-500/25 transition-all">
-                      Free Trial
-                    </button>
-                  </SignInButton>
-                </SignedOut>
-              </div>
-            </div>
-          </div>
-        </DialogPanel>
-      </Dialog>
     </header>
   );
 }

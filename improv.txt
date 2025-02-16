@@ -1,0 +1,729 @@
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import RobustScaler
+from sklearn.feature_selection import SelectKBest, mutual_info_regression
+from sklearn.model_selection import TimeSeriesSplit
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import (Bidirectional, LSTM, Dense, Dropout, 
+                                   Input, Attention, Conv1D, Multiply, LayerNormalization)
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint, 
+                                      ReduceLROnPlateau, TensorBoard)
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.metrics import RootMeanSquaredError
+import joblib
+import os
+from datetime import datetime, timedelta
+from ta import add_all_ta_features
+from ta.momentum import RSIIndicator
+from ta.volatility import BollingerBands
+from polygon import RESTClient
+import fredapi
+import requests
+from newsapi import NewsApiClient
+
+# Configuration
+POLYGON_API_KEY = os.getenv('POLYGON_API_KEY')
+FRED_API_KEY = os.getenv('FRED_API_KEY')
+NEWSAPI_API_KEY = os.getenv('NEWSAPI_API_KEY')
+SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'SPY']
+MACRO_INDICATORS = ['GDP', 'UNRATE', 'CPIAUCSL', 'FEDFUNDS', 'VIXCLS']
+SEQUENCE_LENGTH = 60
+FORECAST_HORIZON = 5
+TEST_SIZE = 0.2
+RANDOM_STATE = 42
+
+# Advanced Feature Engineering Parameters
+ROLLING_WINDOWS = [3, 7, 21]  # Short, medium, and long-term windows
+SELECT_K_FEATURES = 40
+
+# Initialize APIs
+polygon_client = RESTClient(api_key=POLYGON_API_KEY)
+fred = fredapi.Fred(api_key=FRED_API_KEY)
+newsapi = NewsApiClient(api_key=NEWSAPI_API_KEY)
+
+def fetch_macroeconomic_data():
+    """Fetch macroeconomic indicators from FRED"""
+    macro_data = pd.DataFrame()
+    
+    for series in MACRO_INDICATORS:
+        data = fred.get_series(series)
+        macro_data[series] = data
+        
+    macro_data = macro_data.resample('D').ffill().bfill()
+    return macro_data
+
+def fetch_news_sentiment(symbol, start_date, end_date):
+    """Fetch news sentiment data using NewsAPI"""
+    articles = newsapi.get_everything(
+        q=symbol,
+        from_param=start_date,
+        to=end_date,
+        language='en',
+        sort_by='relevancy'
+    )
+    
+    sentiments = []
+    for article in articles['articles']:
+        # Simple sentiment analysis (could be replaced with ML model)
+        positive_words = ['bullish', 'growth', 'positive', 'strong', 'buy']
+        negative_words = ['bearish', 'decline', 'negative', 'weak', 'sell']
+        content = (article['title'] + ' ' + article['description']).lower()
+        positive = sum(1 for word in positive_words if word in content)
+        negative = sum(1 for word in negative_words if word in content)
+        sentiment = (positive - negative) / (positive + negative + 1e-6)
+        sentiments.append({
+            'date': pd.to_datetime(article['publishedAt']).date(),
+            'sentiment': sentiment
+        })
+    
+    return pd.DataFrame(sentiments).groupby('date').mean().resample('D').mean().ffill()
+
+def fetch_stock_data(symbol, start_date, end_date):
+    """Enhanced data fetcher with volume checks and corporate action handling"""
+    try:
+        aggs = polygon_client.get_aggs(
+            ticker=symbol,
+            multiplier=1,
+            timespan="day",
+            from_=start_date,
+            to=end_date
+        )
+        
+        data = []
+        for agg in aggs:
+            # Detect split-adjusted prices
+            if agg.vw > agg.volume * 2:  # Simple volume-weighted price check
+                adjusted_close = agg.close * (agg.volume / agg.vw)
+            else:
+                adjusted_close = agg.close
+                
+            data.append({
+                'timestamp': agg.timestamp,
+                'symbol': symbol,
+                'open': agg.open,
+                'high': agg.high,
+                'low': agg.low,
+                'close': adjusted_close,
+                'volume': agg.volume,
+                'vwap': agg.vw
+            })
+            
+        df = pd.DataFrame(data)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+        df = df.set_index('timestamp').sort_index()
+        return df
+    except Exception as e:
+        print(f"Error fetching data for {symbol}: {e}")
+        return None
+
+def create_advanced_features(df):
+    """Create technical features with market regime detection"""
+    df = df.copy()
+    
+    # Basic technical indicators
+    df = add_all_ta_features(df, open="open", high="high", low="low", 
+                            close="close", volume="volume", fillna=True)
+    
+    # Advanced technical features
+    rsi = RSIIndicator(df['close'], window=14)
+    df['rsi'] = rsi.rsi()
+    
+    bb = BollingerBands(df['close'], window=20, window_dev=2)
+    df['bb_bbm'] = bb.bollinger_mavg()
+    df['bb_bbh'] = bb.bollinger_hband()
+    df['bb_bbl'] = bb.bollinger_lband()
+    
+    # Market regime detection
+    df['50_day_ma'] = df['close'].rolling(50).mean()
+    df['200_day_ma'] = df['close'].rolling(200).mean()
+    df['market_regime'] = np.where(
+        df['50_day_ma'] > df['200_day_ma'], 1, -1)
+    
+    # Volatility measures
+    df['log_returns'] = np.log(df['close']).diff()
+    df['realized_vol'] = df['log_returns'].rolling(21).std() * np.sqrt(252)
+    
+    # Volume features
+    df['volume_roc'] = df['volume'].pct_change(3)
+    df['volume_zscore'] = (df['volume'] - df['volume'].rolling(21).mean()) / df['volume'].rolling(21).std()
+    
+    # Rolling statistical features
+    for window in ROLLING_WINDOWS:
+        df[f'return_{window}d'] = df['close'].pct_change(window)
+        df[f'volatility_{window}d'] = df['log_returns'].rolling(window).std()
+        df[f'skew_{window}d'] = df['log_returns'].rolling(window).skew()
+        df[f'kurtosis_{window}d'] = df['log_returns'].rolling(window).kurt()
+    
+    # Lagged features
+    for lag in [1, 3, 5]:
+        df[f'close_lag_{lag}'] = df['close'].shift(lag)
+    
+    return df
+
+def create_multimodal_dataset(stock_data, macro_data, news_data):
+    """Combine stock data with macroeconomic and news sentiment"""
+    full_data = stock_data.join(macro_data, how='left')
+    full_data = full_data.join(news_data, how='left')
+    
+    # Forward fill macroeconomic data and fill remaining NA
+    full_data = full_data.ffill().bfill()
+    
+    return full_data
+
+def feature_selection(data, target_col='close', k=SELECT_K_FEATURES):
+    """Advanced feature selection using mutual information"""
+    X = data.drop(columns=[target_col])
+    y = data[target_col]
+    
+    selector = SelectKBest(score_func=mutual_info_regression, k=k)
+    selector.fit(X, y)
+    
+    selected_features = X.columns[selector.get_support()]
+    return data[selected_features]
+
+def create_3d_sequences(data, time_steps=SEQUENCE_LENGTH, horizon=FORECAST_HORIZON):
+    """Create 3D sequences with multiple forecast horizons"""
+    X, y = [], []
+    for i in range(len(data) - time_steps - horizon):
+        X.append(data[i:(i + time_steps)])
+        y.append(data[i + time_steps:i + time_steps + horizon, 3])  # Close price
+    return np.array(X), np.array(y)
+
+def build_hybrid_model(input_shape):
+    """Build a hybrid Conv1D-BiLSTM-Attention model with multi-task learning"""
+    inputs = Input(shape=input_shape)
+    
+    # Temporal Convolution
+    conv = Conv1D(64, kernel_size=3, activation='relu', padding='causal')(inputs)
+    conv = LayerNormalization()(conv)
+    
+    # Bidirectional LSTM with Attention
+    lstm_out = Bidirectional(LSTM(128, return_sequences=True))(conv)
+    attention = Attention()([lstm_out, lstm_out])
+    lstm_out = Multiply()([lstm_out, attention])
+    lstm_out = LayerNormalization()(lstm_out)
+    
+    # Volatility Prediction Head
+    volatility = LSTM(64, return_sequences=False)(lstm_out)
+    volatility = Dense(32, activation='relu')(volatility)
+    volatility_out = Dense(1, activation='linear', name='volatility')(volatility)
+    
+    # Price Prediction Head
+    price = LSTM(64, return_sequences=False)(lstm_out)
+    price = Dense(32, activation='relu')(price)
+    price_out = Dense(FORECAST_HORIZON, activation='linear', name='price')(price)
+    
+    model = Model(inputs=inputs, outputs=[price_out, volatility_out])
+    
+    model.compile(optimizer=Adam(learning_rate=0.001, clipvalue=0.5),
+                loss={'price': 'huber', 'volatility': 'logcosh'},
+                loss_weights={'price': 0.7, 'volatility': 0.3},
+                metrics={'price': [RootMeanSquaredError()]})
+    
+    return model
+
+def backtest_model(model, X_test, y_test, scaler, initial_capital=10000):
+    """Advanced backtesting system with risk management"""
+    predictions = model.predict(X_test)[0]
+    predictions = scaler.inverse_transform(
+        np.repeat(predictions, X_test.shape[2], axis=-1))[:, :, 3]
+    
+    portfolio = {'cash': initial_capital, 'shares': 0}
+    actual_returns = []
+    predicted_returns = []
+    
+    for i in range(len(predictions)):
+        current_price = y_test[i, 0]
+        predicted_prices = predictions[i]
+        
+        # Trading strategy: Simple momentum-based
+        predicted_return = (predicted_prices[-1] / current_price) - 1
+        
+        if predicted_return > 0.01:  # Buy signal
+            shares_to_buy = portfolio['cash'] // current_price
+            portfolio['shares'] += shares_to_buy
+            portfolio['cash'] -= shares_to_buy * current_price
+        elif predicted_return < -0.01:  # Sell signal
+            portfolio['cash'] += portfolio['shares'] * current_price
+            portfolio['shares'] = 0
+            
+        # Track performance
+        actual_returns.append((y_test[i+1, 0] / current_price) - 1)
+        predicted_returns.append(predicted_return)
+    
+    # Calculate performance metrics
+    total_value = portfolio['cash'] + portfolio['shares'] * y_test[-1, 0]
+    returns = total_value / initial_capital - 1
+    volatility = np.std(actual_returns)
+    sharpe_ratio = np.mean(actual_returns) / volatility if volatility != 0 else 0
+    
+    return {
+        'total_return': returns,
+        'sharpe_ratio': sharpe_ratio,
+        'max_drawdown': calculate_max_drawdown(actual_returns),
+        'prediction_accuracy': np.corrcoef(actual_returns, predicted_returns)[0, 1]
+    }
+
+def calculate_max_drawdown(returns):
+    """Calculate maximum drawdown from return series"""
+    cumulative = np.cumprod(1 + np.array(returns))
+    peak = cumulative.max()
+    trough = cumulative.min()
+    return (trough - peak) / peak
+
+def main():
+    # Data Collection
+    print("Fetching macroeconomic data...")
+    macro_data = fetch_macroeconomic_data()
+    
+    all_data = []
+    for symbol in SYMBOLS:
+        print(f"Processing {symbol}...")
+        stock_data = fetch_stock_data(symbol, "2015-01-01", "2023-12-31")
+        if stock_data is None:
+            continue
+            
+        news_data = fetch_news_sentiment(symbol, "2015-01-01", "2023-12-31")
+        features = create_advanced_features(stock_data)
+        full_data = create_multimodal_dataset(features, macro_data, news_data)
+        selected_features = feature_selection(full_data)
+        all_data.append(selected_features)
+    
+    combined_data = pd.concat(all_data).dropna()
+    
+    # Preprocessing
+    scaler = RobustScaler()
+    scaled_data = scaler.fit_transform(combined_data)
+    joblib.dump(scaler, 'models/advanced_scaler.save')
+    
+    # Sequence Creation
+    X, y = create_3d_sequences(scaled_data)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=TEST_SIZE, shuffle=False)
+    
+    # Model Building
+    model = build_hybrid_model((X_train.shape[1], X_train.shape[2]))
+    
+    callbacks = [
+        EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True),
+        ModelCheckpoint('models/advanced_model.h5', save_best_only=True),
+        ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5),
+        TensorBoard(log_dir='./logs')
+    ]
+    
+    # Training
+    history = model.fit(
+        X_train, {'price': y_train[:, :, 0], 'volatility': y_train[:, :, 1]},
+        validation_split=0.2,
+        epochs=100,
+        batch_size=64,
+        callbacks=callbacks,
+        verbose=1
+    )
+    
+    # Backtesting
+    test_results = backtest_model(model, X_test, y_test, scaler)
+    print("\nBacktest Results:")
+    print(f"Total Return: {test_results['total_return']:.2%}")
+    print(f"Sharpe Ratio: {test_results['sharpe_ratio']:.2f}")
+    print(f"Max Drawdown: {test_results['max_drawdown']:.2%}")
+    print(f"Prediction Accuracy: {test_results['prediction_accuracy']:.2%}")
+    
+    # Save Final Model
+    model.save('models/final_advanced_model.h5')
+    print("Training and evaluation completed!")
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import RobustScaler
+from sklearn.feature_selection import SelectKBest, mutual_info_regression
+from sklearn.model_selection import TimeSeriesSplit
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import (Bidirectional, LSTM, Dense, Dropout, 
+                                   Input, Attention, Conv1D, Multiply, LayerNormalization)
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint, 
+                                      ReduceLROnPlateau, TensorBoard)
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.metrics import RootMeanSquaredError
+import joblib
+import os
+from datetime import datetime, timedelta
+from ta import add_all_ta_features
+from ta.momentum import RSIIndicator
+from ta.volatility import BollingerBands
+from polygon import RESTClient
+import fredapi
+import requests
+from newsapi import NewsApiClient
+
+# Configuration
+POLYGON_API_KEY = os.getenv('POLYGON_API_KEY')
+FRED_API_KEY = os.getenv('FRED_API_KEY')
+NEWSAPI_API_KEY = os.getenv('NEWSAPI_API_KEY')
+SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN']
+MACRO_INDICATORS = ['GDP', 'UNRATE', 'CPIAUCSL', 'FEDFUNDS', 'VIXCLS']
+SEQUENCE_LENGTH = 60
+FORECAST_HORIZON = 5
+TEST_SIZE = 0.2
+RANDOM_STATE = 42
+
+# Advanced Feature Engineering Parameters
+ROLLING_WINDOWS = [3, 7, 21]  # Short, medium, and long-term windows
+SELECT_K_FEATURES = 40
+
+# Initialize APIs
+polygon_client = RESTClient(api_key="jCQvtKFC39SWJprdqxyiXFpac9UHB9K1")
+fred = fredapi.Fred(api_key="6181a0492af2b26faf1da2bba74bd126")
+newsapi = NewsApiClient(api_key="a9197c465fcd48898b38ee4d46e34dd2")
+
+def fetch_macroeconomic_data():
+    """Fetch macroeconomic indicators from FRED with error handling"""
+    macro_data = pd.DataFrame()
+    
+    for series in MACRO_INDICATORS:
+        try:
+            data = fred.get_series(series)
+            if data is not None and not data.empty:
+                macro_data[series] = data
+            else:
+                print(f"Warning: No data found for {series}.")
+        except Exception as e:
+            print(f"Error fetching {series} from FRED: {str(e)}")
+    
+    if macro_data.empty:
+        print("Warning: No macroeconomic data fetched.")
+        return None
+    
+    # Resample and fill missing data
+    macro_data = macro_data.resample('D').ffill().bfill()
+    return macro_data
+
+def fetch_news_sentiment(symbol, start_date, end_date):
+    """Fetch news sentiment data with error handling"""
+    try:
+        articles = newsapi.get_everything(
+            q=symbol,
+            from_param=start_date,
+            to=end_date,
+            language='en',
+            sort_by='relevancy'
+        )
+        
+        if not articles or 'articles' not in articles:
+            print(f"No news articles found for {symbol}.")
+            return pd.DataFrame()
+        
+        sentiments = []
+        for article in articles['articles']:
+            content = (article['title'] + ' ' + article['description']).lower()
+            positive = sum(1 for word in ['bullish', 'growth', 'positive', 'strong', 'buy'] if word in content)
+            negative = sum(1 for word in ['bearish', 'decline', 'negative', 'weak', 'sell'] if word in content)
+            sentiment = (positive - negative) / (positive + negative + 1e-6)
+            sentiments.append({
+                'date': pd.to_datetime(article['publishedAt']).date(),
+                'sentiment': sentiment
+            })
+        
+        if not sentiments:
+            print(f"No valid sentiment data for {symbol}.")
+            return pd.DataFrame()
+        
+        return pd.DataFrame(sentiments).groupby('date').mean().resample('D').mean().ffill()
+    
+    except Exception as e:
+        print(f"Error fetching news sentiment for {symbol}: {str(e)}")
+        return pd.DataFrame()
+
+def fetch_stock_data(symbol, start_date, end_date):
+    """Enhanced data fetcher with better error handling and data validation"""
+    try:
+        # Fetch data from Polygon API
+        aggs = polygon_client.get_aggs(
+            ticker=symbol,
+            multiplier=1,
+            timespan="day",
+            from_=start_date,
+            to=end_date
+        )
+        
+        data = []
+        for agg in aggs:
+            # Handle potential missing attributes
+            if not hasattr(agg, 'timestamp') or not hasattr(agg, 'close'):
+                continue  # Skip invalid data points
+                
+            # Use adjusted close if available, otherwise use close
+            adjusted_close = getattr(agg, 'adjusted_close', agg.close)
+            
+            data.append({
+                'timestamp': agg.timestamp,
+                'symbol': symbol,
+                'open': getattr(agg, 'open', None),
+                'high': getattr(agg, 'high', None),
+                'low': getattr(agg, 'low', None),
+                'close': adjusted_close,
+                'volume': getattr(agg, 'volume', None),
+                'vwap': getattr(agg, 'vwap', None)  # Use VWAP if available
+            })
+            
+        df = pd.DataFrame(data)
+        if df.empty:
+            print(f"No data fetched for {symbol}.")
+            return None
+            
+        # Convert timestamp and set as index
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+        df = df.set_index('timestamp').sort_index()
+        
+        # Validate data
+        if df.isnull().sum().sum() > 0:
+            print(f"Warning: Missing data points for {symbol}. Filling forward.")
+            df = df.ffill().bfill()
+            
+        return df
+    
+    except Exception as e:
+        print(f"Error fetching data for {symbol}: {str(e)}")
+        return None
+
+def create_advanced_features(df):
+    """Create technical features with market regime detection"""
+    df = df.copy()
+    
+    # Basic technical indicators
+    df = add_all_ta_features(df, open="open", high="high", low="low", 
+                            close="close", volume="volume", fillna=True)
+    
+    # Advanced technical features
+    rsi = RSIIndicator(df['close'], window=14)
+    df['rsi'] = rsi.rsi()
+    
+    bb = BollingerBands(df['close'], window=20, window_dev=2)
+    df['bb_bbm'] = bb.bollinger_mavg()
+    df['bb_bbh'] = bb.bollinger_hband()
+    df['bb_bbl'] = bb.bollinger_lband()
+    
+    # Market regime detection
+    df['50_day_ma'] = df['close'].rolling(50).mean()
+    df['200_day_ma'] = df['close'].rolling(200).mean()
+    df['market_regime'] = np.where(
+        df['50_day_ma'] > df['200_day_ma'], 1, -1)
+    
+    # Volatility measures
+    df['log_returns'] = np.log(df['close']).diff()
+    df['realized_vol'] = df['log_returns'].rolling(21).std() * np.sqrt(252)
+    
+    # Volume features
+    df['volume_roc'] = df['volume'].pct_change(3)
+    df['volume_zscore'] = (df['volume'] - df['volume'].rolling(21).mean()) / df['volume'].rolling(21).std()
+    
+    # Create a dictionary to store rolling features
+    rolling_features = {}
+    for window in ROLLING_WINDOWS:
+        rolling_features[f'return_{window}d'] = df['close'].pct_change(window)
+        rolling_features[f'volatility_{window}d'] = df['log_returns'].rolling(window).std()
+        rolling_features[f'skew_{window}d'] = df['log_returns'].rolling(window).skew()
+        rolling_features[f'kurtosis_{window}d'] = df['log_returns'].rolling(window).kurt()
+    
+    # Add rolling features to the DataFrame
+    rolling_df = pd.DataFrame(rolling_features)
+    df = pd.concat([df, rolling_df], axis=1)
+    
+    # Lagged features
+    for lag in [1, 3, 5]:
+        df[f'close_lag_{lag}'] = df['close'].shift(lag)
+    
+    return df
+
+def create_multimodal_dataset(stock_data, macro_data, news_data):
+    """Combine stock data with macroeconomic and news sentiment"""
+    full_data = stock_data.join(macro_data, how='left')
+    full_data = full_data.join(news_data, how='left')
+    
+    # Forward fill macroeconomic data and fill remaining NA
+    full_data = full_data.ffill().bfill()
+    
+    return full_data
+
+def feature_selection(data, target_col='close', k=SELECT_K_FEATURES):
+    """Advanced feature selection using mutual information"""
+    # Drop non-numerical columns
+    numerical_data = data.select_dtypes(include=[np.number])
+    
+    X = numerical_data.drop(columns=[target_col])
+    y = numerical_data[target_col]
+    
+    selector = SelectKBest(score_func=mutual_info_regression, k=k)
+    selector.fit(X, y)
+    
+    selected_features = X.columns[selector.get_support()]
+    return data[selected_features]
+
+def create_3d_sequences(data, time_steps=SEQUENCE_LENGTH, horizon=FORECAST_HORIZON):
+    """Create 3D sequences with multiple forecast horizons"""
+    X, y = [], []
+    for i in range(len(data) - time_steps - horizon):
+        X.append(data[i:(i + time_steps)])
+        y.append(data[i + time_steps:i + time_steps + horizon, 3])  # Close price
+    return np.array(X), np.array(y)
+
+def build_hybrid_model(input_shape):
+    """Build a hybrid Conv1D-BiLSTM-Attention model with multi-task learning"""
+    inputs = Input(shape=input_shape)
+    
+    # Temporal Convolution
+    conv = Conv1D(64, kernel_size=3, activation='relu', padding='causal')(inputs)
+    conv = LayerNormalization()(conv)
+    
+    # Bidirectional LSTM with Attention
+    lstm_out = Bidirectional(LSTM(128, return_sequences=True))(conv)
+    attention = Attention()([lstm_out, lstm_out])
+    lstm_out = Multiply()([lstm_out, attention])
+    lstm_out = LayerNormalization()(lstm_out)
+    
+    # Volatility Prediction Head
+    volatility = LSTM(64, return_sequences=False)(lstm_out)
+    volatility = Dense(32, activation='relu')(volatility)
+    volatility_out = Dense(1, activation='linear', name='volatility')(volatility)
+    
+    # Price Prediction Head
+    price = LSTM(64, return_sequences=False)(lstm_out)
+    price = Dense(32, activation='relu')(price)
+    price_out = Dense(FORECAST_HORIZON, activation='linear', name='price')(price)
+    
+    model = Model(inputs=inputs, outputs=[price_out, volatility_out])
+    
+    model.compile(optimizer=Adam(learning_rate=0.001, clipvalue=0.5),
+                loss={'price': 'huber', 'volatility': 'logcosh'},
+                loss_weights={'price': 0.7, 'volatility': 0.3},
+                metrics={'price': [RootMeanSquaredError()]})
+    
+    return model
+
+def backtest_model(model, X_test, y_test, scaler, initial_capital=10000):
+    """Advanced backtesting system with risk management"""
+    predictions = model.predict(X_test)[0]
+    predictions = scaler.inverse_transform(
+        np.repeat(predictions, X_test.shape[2], axis=-1))[:, :, 3]
+    
+    portfolio = {'cash': initial_capital, 'shares': 0}
+    actual_returns = []
+    predicted_returns = []
+    
+    for i in range(len(predictions)):
+        current_price = y_test[i, 0]
+        predicted_prices = predictions[i]
+        
+        # Trading strategy: Simple momentum-based
+        predicted_return = (predicted_prices[-1] / current_price) - 1
+        
+        if predicted_return > 0.01:  # Buy signal
+            shares_to_buy = portfolio['cash'] // current_price
+            portfolio['shares'] += shares_to_buy
+            portfolio['cash'] -= shares_to_buy * current_price
+        elif predicted_return < -0.01:  # Sell signal
+            portfolio['cash'] += portfolio['shares'] * current_price
+            portfolio['shares'] = 0
+            
+        # Track performance
+        actual_returns.append((y_test[i+1, 0] / current_price) - 1)
+        predicted_returns.append(predicted_return)
+    
+    # Calculate performance metrics
+    total_value = portfolio['cash'] + portfolio['shares'] * y_test[-1, 0]
+    returns = total_value / initial_capital - 1
+    volatility = np.std(actual_returns)
+    sharpe_ratio = np.mean(actual_returns) / volatility if volatility != 0 else 0
+    
+    return {
+        'total_return': returns,
+        'sharpe_ratio': sharpe_ratio,
+        'max_drawdown': calculate_max_drawdown(actual_returns),
+        'prediction_accuracy': np.corrcoef(actual_returns, predicted_returns)[0, 1]
+    }
+
+def calculate_max_drawdown(returns):
+    """Calculate maximum drawdown from return series"""
+    cumulative = np.cumprod(1 + np.array(returns))
+    peak = cumulative.max()
+    trough = cumulative.min()
+    return (trough - peak) / peak
+
+def main():
+    # Data Collection
+    print("Fetching macroeconomic data...")
+    macro_data = fetch_macroeconomic_data()
+    
+    all_data = []
+    for symbol in SYMBOLS:
+        print(f"Processing {symbol}...")
+        stock_data = fetch_stock_data(symbol, "2015-01-01", "2023-12-31")
+        if stock_data is None:
+            continue
+            
+        news_data = fetch_news_sentiment(symbol, "2025-07-01", "2025-09-02")
+        features = create_advanced_features(stock_data)
+        full_data = create_multimodal_dataset(features, macro_data, news_data)
+        selected_features = feature_selection(full_data)
+        all_data.append(selected_features)
+    
+    combined_data = pd.concat(all_data).dropna()
+    
+    # Preprocessing
+    scaler = RobustScaler()
+    scaled_data = scaler.fit_transform(combined_data)
+    joblib.dump(scaler, 'models/advanced_scaler.save')
+    
+    # Sequence Creation
+    X, y = create_3d_sequences(scaled_data)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=TEST_SIZE, shuffle=False)
+    
+    # Model Building
+    model = build_hybrid_model((X_train.shape[1], X_train.shape[2]))
+    
+    callbacks = [
+        EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True),
+        ModelCheckpoint('models/advanced_model.h5', save_best_only=True),
+        ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5),
+        TensorBoard(log_dir='./logs')
+    ]
+    
+    # Training
+    history = model.fit(
+        X_train, {'price': y_train[:, :, 0], 'volatility': y_train[:, :, 1]},
+        validation_split=0.2,
+        epochs=100,
+        batch_size=64,
+        callbacks=callbacks,
+        verbose=1
+    )
+    
+    # Backtesting
+    test_results = backtest_model(model, X_test, y_test, scaler)
+    print("\nBacktest Results:")
+    print(f"Total Return: {test_results['total_return']:.2%}")
+    print(f"Sharpe Ratio: {test_results['sharpe_ratio']:.2f}")
+    print(f"Max Drawdown: {test_results['max_drawdown']:.2%}")
+    print(f"Prediction Accuracy: {test_results['prediction_accuracy']:.2%}")
+    
+    # Save Final Model
+    model.save('models/final_advanced_model.h5')
+    print("Training and evaluation completed!")
+
+if __name__ == '__main__':
+    main()
