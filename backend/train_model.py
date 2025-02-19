@@ -1,8 +1,8 @@
 import io
 import requests
 import os
-from flask import Flask, jsonify, request  # type: ignore
-from flask_cors import CORS
+from flask import Flask, jsonify, request  # type: unused-import
+from flask_cors import CORS #type: ignore
 import numpy as np
 import pandas as pd
 import logging

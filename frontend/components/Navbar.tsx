@@ -13,6 +13,7 @@ import {
   Bitcoin,
   ChartCandlestick,
   GraduationCapIcon,
+  ImageIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
@@ -23,6 +24,7 @@ import Link from "next/link";
 const marketItems = [
   { name: "Crypto", href: "/markets/crypto", icon: Bitcoin },
   { name: "Stock", href: "/markets/stocks", icon: ChartCandlestick },
+  {name: "NFT's", href: "/markets/nfts", icon: ImageIcon},
 ];
 
 const navigation = [

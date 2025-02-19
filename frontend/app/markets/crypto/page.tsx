@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import CryptoSearch from "./crypto-search";
+import CryptoHoldings from "./crypto-holding";
 // import MarketOverview from "./market-overview";
 
 interface Crypto {
@@ -181,9 +182,10 @@ const CryptoMarketPage = () => {
         {/* <CryptoSearch /> */}
 
         <Tabs defaultValue="top-movers" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="top-movers">Top Movers</TabsTrigger>
             <TabsTrigger value="tech-stocks">Market Data</TabsTrigger>
+            <TabsTrigger value="holdings">Holdings</TabsTrigger>
           </TabsList>
           <TabsContent value="top-movers">
             <Card>
@@ -232,6 +234,9 @@ const CryptoMarketPage = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="holdings">
+            <CryptoHoldings />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,4 +1,3 @@
-
 from polygon import RESTClient
 polygon_client = RESTClient(api_key="jCQvtKFC39SWJprdqxyiXFpac9UHB9K1")
 
