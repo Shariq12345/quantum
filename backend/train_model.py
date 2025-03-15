@@ -3,7 +3,7 @@ import requests
 import os
 from flask import Flask, jsonify, request  # type: unused-import
 from flask_cors import CORS #type: ignore
-import numpy as np
+import numpy as np 
 import pandas as pd
 import logging
 from sklearn.preprocessing import MinMaxScaler
@@ -51,7 +51,7 @@ SEQUENCE_LENGTH = 60
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 
-def fetch_stock_data(symbol, start_date="2020-01-01", end_date="2024-01-08"):
+def fetch_stock_data(symbol, start_date="2020-01-01", end_date="2025-01-08"):
     try:
         aggs = client.get_aggs(
             ticker=symbol,

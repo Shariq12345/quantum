@@ -98,9 +98,9 @@ export const getStocksByUserId = query({
       .collect();
 
     // Optional: Add error handling if no stocks are found
-    if (userStocks.length === 0) {
-      throw new Error("No stocks found for this user");
-    }
+    // if (userStocks.length === 0) {
+    //   throw new Error("No stocks found for this user");
+    // }
 
     return userStocks;
   },
