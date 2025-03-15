@@ -74,3 +74,26 @@ export const deductFunds = mutation({
     return existingFunds._id;
   },
 });
+
+export const withdrawFunds = mutation({
+  args: {
+    userId: v.string(),
+    amount: v.number(),
+  },
+  handler: async (ctx, { userId, amount }) => {
+    const existingFunds = await ctx.db
+      .query("funds")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+    if (!existingFunds) {
+      throw new Error("Funds not found for the user");
+    }
+    if (existingFunds.amount < amount) {
+      throw new Error("Insufficient funds");
+    }
+    await ctx.db.patch(existingFunds._id, {
+      amount: existingFunds.amount - amount,
+    });
+    return existingFunds._id;
+  },
+});

@@ -59,6 +59,9 @@ export default function TradingPanel({
     symbol: stockSymbol,
   });
 
+  // RECORD TRANSACTIONS
+  const recordTransaction = useMutation(api.transactions.recordTransaction);
+
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuantity(Number(e.target.value));
   };
@@ -94,6 +97,15 @@ export default function TradingPanel({
           amount: totalCost,
         });
 
+        // Record the transaction
+        await recordTransaction({
+          userId: userId ?? "",
+          stockSymbol: stockSymbol,
+          quantity: quantity,
+          price: price,
+          transactionType: "buy",
+        });
+
         toast({
           title: `Successfully bought ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
           description: `Your new balance is $${userFunds - totalCost}`,
@@ -126,6 +138,15 @@ export default function TradingPanel({
         await depositFunds({
           userId: userId ?? "",
           amount: totalCost + profitOrLoss,
+        });
+
+        // Record the transaction
+        await recordTransaction({
+          userId: userId ?? "",
+          stockSymbol: stockSymbol,
+          quantity: quantity,
+          price: price,
+          transactionType: "sell",
         });
 
         toast({

@@ -14,17 +14,19 @@ import {
   ChartCandlestick,
   GraduationCapIcon,
   ImageIcon,
+  Bell,
+  History,
 } from "lucide-react";
 import Image from "next/image";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { DepositFundsDialog } from "./deposit-funds";
+import { MyFundsDialog } from "./my-funds";
 import { Button } from "./ui/button";
 import Link from "next/link";
 
 const marketItems = [
   { name: "Crypto", href: "/markets/crypto", icon: Bitcoin },
   { name: "Stock", href: "/markets/stocks", icon: ChartCandlestick },
-  {name: "NFT's", href: "/markets/nfts", icon: ImageIcon},
+  { name: "NFT's", href: "/markets/nfts", icon: ImageIcon },
 ];
 
 const navigation = [
@@ -132,14 +134,26 @@ export default function Navbar() {
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6 lg:items-center">
           <SignedIn>
-            <DepositFundsDialog />
-            <Link href={"/portfolio"}>
-              <Button className="bg-white text-black hover:bg-gray-200">
-                Portfolio
-              </Button>
-            </Link>
-            <UserButton />
+            <div className="flex items-center gap-x-4">
+              <MyFundsDialog />
+              <Link href={"/portfolio"}>
+                <Button className="bg-white text-black hover:bg-gray-200">
+                  Portfolio
+                </Button>
+              </Link>
+              {/* Bell Icon for Transactions */}
+              <Link
+                href={"/transactions"}
+                className="relative p-2 rounded-full hover:bg-gray-800"
+              >
+                <History className="w-5 h-5 text-gray-300 hover:text-white" />
+                {/* Optional: Notification Badge */}
+                {/* <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span> */}
+              </Link>
+              <UserButton />
+            </div>
           </SignedIn>
+
           <SignedOut>
             <SignInButton mode="modal">
               <button className="text-sm font-medium text-gray-300 hover:text-white">
