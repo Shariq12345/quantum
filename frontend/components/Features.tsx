@@ -1,6 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { motion, useAnimation } from "framer-motion";
+import React from "react";
+import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import {
   BarChartIcon as ChartBar,
@@ -11,15 +11,7 @@ import {
   Lock,
   ExternalLink,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { CardBody, CardContainer, CardItem } from "./ui/3d-card";
-import Image from "next/image";
 
 const features = [
   {

@@ -1,11 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogPanel } from "@headlessui/react";
 import { usePathname } from "next/navigation";
 import {
   Menu,
-  X,
-  BarChart2,
   ChevronDown,
   LineChart,
   BarChart,
@@ -14,7 +11,6 @@ import {
   ChartCandlestick,
   GraduationCapIcon,
   ImageIcon,
-  Bell,
   History,
 } from "lucide-react";
 import Image from "next/image";
@@ -88,7 +84,7 @@ export default function Navbar() {
               key={item.name}
               className="relative"
               onMouseEnter={() => handleMouseEnter(item.name)}
-              onMouseLeave={handleMouseLeave}
+              onMouseLeave={() => setTimeout(() => handleMouseLeave(), 1000)} // Small delay
             >
               <Link
                 href={item.href || "#"}
@@ -108,8 +104,14 @@ export default function Navbar() {
                   />
                 )}
               </Link>
+
+              {/* Dropdown menu */}
               {item.items && activeDropdown === item.name && (
-                <div className="absolute left-0 mt-2 w-48 rounded-xl bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5">
+                <div
+                  className="absolute left-0 mt-2 w-48 rounded-xl bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5"
+                  onMouseEnter={() => handleMouseEnter(item.name)} // Keep open when hovering dropdown
+                  onMouseLeave={handleMouseLeave} // Close when leaving dropdown
+                >
                   <div className="p-2 space-y-1">
                     {item.items.map((subItem) => (
                       <Link

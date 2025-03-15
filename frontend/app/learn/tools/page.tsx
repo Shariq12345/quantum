@@ -2,8 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calculator, BarChart, TrendingDown, Scale } from "lucide-react";
+import { Calculator, BarChart, Scale } from "lucide-react";
 
 const tools = [
   {

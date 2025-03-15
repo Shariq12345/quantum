@@ -10,7 +10,6 @@ import {
   TrendingUp,
   TrendingDown,
   Search,
-  Download,
   Clock,
   Info,
 } from "lucide-react";
@@ -32,14 +31,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import TransactionExport from "./transaction-export";
 
 export default function TransactionsPage() {
   const { user } = useUser();
@@ -79,7 +73,7 @@ export default function TransactionsPage() {
     ).length || 0;
 
   // Transaction type badge styling
-interface Transaction {
+  interface Transaction {
     _id: string;
     transactionType: "buy" | "sell" | "deposit" | "withdrawal";
     stockSymbol?: string;
@@ -88,22 +82,22 @@ interface Transaction {
     quantity?: number;
     price?: number;
     timestamp: string;
-}
+  }
 
-const getBadgeStyles = (type: Transaction["transactionType"]): string => {
+  const getBadgeStyles = (type: Transaction["transactionType"]): string => {
     switch (type) {
-        case "buy":
-            return "bg-green-100 text-green-800 hover:bg-green-200";
-        case "sell":
-            return "bg-red-100 text-red-800 hover:bg-red-200";
-        case "deposit":
-            return "bg-blue-100 text-blue-800 hover:bg-blue-200";
-        case "withdrawal":
-            return "bg-orange-100 text-orange-800 hover:bg-orange-200";
-        default:
-            return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+      case "buy":
+        return "bg-green-100 text-green-800 hover:bg-green-200";
+      case "sell":
+        return "bg-red-100 text-red-800 hover:bg-red-200";
+      case "deposit":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+      case "withdrawal":
+        return "bg-orange-100 text-orange-800 hover:bg-orange-200";
+      default:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
     }
-};
+  };
 
   // Loading state
   if (!transactions) {
@@ -156,8 +150,7 @@ const getBadgeStyles = (type: Transaction["transactionType"]): string => {
               Track all your financial activities
             </p>
           </div>
-
-          <div className="flex gap-2 mt-4 md:mt-0">
+          {/* <div className="flex gap-2 mt-4 md:mt-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -174,7 +167,8 @@ const getBadgeStyles = (type: Transaction["transactionType"]): string => {
                 <DropdownMenuItem>Export as PDF</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </div> */}
+          <TransactionExport transactions={transactions} />
         </motion.div>
 
         {/* Summary Cards */}
@@ -301,8 +295,8 @@ const getBadgeStyles = (type: Transaction["transactionType"]): string => {
                   Recent Transactions
                 </CardTitle>
                 <CardDescription>
-                  Showing {filteredTransactions?.length} of {transactions.length}{" "}
-                  transactions
+                  Showing {filteredTransactions?.length} of{" "}
+                  {transactions.length} transactions
                 </CardDescription>
               </CardHeader>
 

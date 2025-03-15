@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import { BarData, createChart } from "lightweight-charts";
 
@@ -14,7 +13,6 @@ const CryptoIdPage = ({ params }: CryptoIdPageProps) => {
   const [timeFrame, setTimeFrame] = useState("5Min"); // Default timeframe
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const crosshairInfoRef = useRef<HTMLDivElement>(null); // To display the crosshair info
-  const router = useRouter();
   //@ts-ignore
   const { cryptoId } = React.use(params); // Get the cryptoId from the URL
 
@@ -80,27 +78,7 @@ const CryptoIdPage = ({ params }: CryptoIdPageProps) => {
           borderColor: "#485c7b",
           visible: true, // Ensure the time scale is visible
         },
-        // handleScroll: true,
-        // handleScale: true,
       });
-
-      //   chart.timeScale().fitContent();
-      //   chart.applyOptions({
-      //     handleScroll: {
-      //       mouseWheel: true,
-      //       pressedMouseMove: true,
-      //       horzTouchDrag: true,
-      //     },
-      //     handleScale: {
-      //       axisPressedMouseMove: {
-      //         time: true,
-      //         price: true,
-      //       },
-      //       mouseWheel: true,
-      //       pinch: true,
-      //     },
-      //   });
-
       // Add a candlestick series to the chart
       const candlestickSeries = chart.addCandlestickSeries({
         upColor: "#4fff50",

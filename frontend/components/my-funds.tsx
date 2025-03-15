@@ -19,8 +19,6 @@ import {
   CircleDollarSign,
   CreditCard,
   DollarSign,
-  ArrowDownToLine,
-  ArrowUpFromLine,
   Wallet,
   PiggyBank,
   Loader2,
@@ -241,7 +239,8 @@ export function MyFundsDialog() {
               </Button>
 
               <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
-                <Shield className="h-3 w-3" /> Secured by bank-level encryption
+                <Shield className="h-3 w-3" /> Secured with Bank-Grade
+                Encryption
               </div>
             </form>
           </TabsContent>
@@ -314,7 +313,7 @@ export function MyFundsDialog() {
               <span>Bank-level security</span>
             </div>
             <a
-              href="#"
+              href="/terms"
               className="flex items-center text-emerald-600 hover:underline"
             >
               Terms & Privacy <ChevronRight className="h-3 w-3 ml-1" />

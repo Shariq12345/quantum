@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Instagram, Mail, Phone, ArrowRight, Loader2 } from "lucide-react";
+import { Instagram, Mail, ArrowRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 // import emailjs from "@emailjs/browser";

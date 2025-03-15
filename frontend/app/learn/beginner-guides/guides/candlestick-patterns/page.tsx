@@ -1,12 +1,6 @@
 import React from "react";
 import Image from "next/image"; // For optimized images
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card"; // UI Components
+import { Card, CardTitle, CardDescription } from "@/components/ui/card"; // UI Components
 import { Separator } from "@/components/ui/separator";
 
 // ✅ Reusable Component for Candlestick Pattern Cards

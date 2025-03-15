@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   BookmarkIcon,
   Calculator,
-  MessageCircle,
-  MessageCircleIcon,
   MessageCircleQuestionIcon,
   YoutubeIcon,
 } from "lucide-react";

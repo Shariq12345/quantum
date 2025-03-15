@@ -66,7 +66,7 @@ const BeginnerGuides: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-6xl pt-[120px]">
       <header className="text-center mb-12">
         <h1 className="text-3xl font-bold mb-4">
-          Beginner's Guide to Investing
+          Beginner&apos;s Guide to Investing
         </h1>
         <p className="text-base text-muted-foreground">
           Master the basics of investing with our comprehensive guides

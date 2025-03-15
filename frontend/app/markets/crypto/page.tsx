@@ -9,11 +9,9 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   TrendingUp,
-  Activity,
   RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import CryptoSearch from "./crypto-search";
 import CryptoHoldings from "./crypto-holding";
 // import MarketOverview from "./market-overview";
 
@@ -31,10 +29,10 @@ interface Crypto {
 const CryptoRow = ({ crypto }: { crypto: Crypto }) => {
   const router = useRouter();
 
-  const handleClick = () => {
-    const baseCurrency = crypto.symbol.split("/")[0];
-    router.push(`/markets/crypto/${baseCurrency}`);
-  };
+  // const handleClick = () => {
+  //   const baseCurrency = crypto.symbol.split("/")[0];
+  //   router.push(`/markets/crypto/${baseCurrency}`);
+  // };
 
   return (
     <div

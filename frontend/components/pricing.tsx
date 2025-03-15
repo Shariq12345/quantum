@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { motion } from "framer-motion";
-import { Brain, Check, CircleDollarSign } from "lucide-react";
+import { Check, CircleDollarSign } from "lucide-react";
 
 interface PlanFeature {
   text: string;
