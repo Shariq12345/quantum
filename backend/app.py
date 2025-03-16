@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import logging
 from sklearn.preprocessing import MinMaxScaler
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 from tensorflow.keras.models import load_model
 import joblib
 from ta import add_all_ta_features
