@@ -79,7 +79,7 @@ export default function Hero() {
                 Real-time market predictions
               </Badge>
 
-              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-6xl">
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
                 AI-Powered Stock
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">
                   {" "}
@@ -87,7 +87,7 @@ export default function Hero() {
                 </span>
               </h1>
 
-              <p className="sm:text-lg text-base text-gray-400">
+              <p className="sm:text-lg  text-gray-400">
                 Harness the power of advanced AI to predict market trends with
                 unprecedented accuracy. Make data-driven decisions with our
                 cutting-edge stock prediction platform.
