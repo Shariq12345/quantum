@@ -79,7 +79,7 @@ export default function Hero() {
                 Real-time market predictions
               </Badge>
 
-              <h1 className="text-5xl font-bold tracking-tight text-white sm:text-6xl">
+              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-6xl">
                 AI-Powered Stock
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">
                   {" "}
@@ -87,31 +87,36 @@ export default function Hero() {
                 </span>
               </h1>
 
-              <p className="text-lg text-gray-400">
+              <p className="sm:text-lg text-base text-gray-400">
                 Harness the power of advanced AI to predict market trends with
                 unprecedented accuracy. Make data-driven decisions with our
                 cutting-edge stock prediction platform.
               </p>
 
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="group bg-emerald-600 hover:bg-emerald-700"
+                  className="group bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto"
                 >
                   Start Free Trial
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
-                <Button variant="outline" size="lg">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                >
                   View Demo
                 </Button>
               </div>
             </motion.div>
 
+            {/* RIGHT-SIDE CHART */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex-1 w-full"
+              className="hidden lg:block flex-1 w-full"
             >
               <Card className="relative overflow-hidden">
                 <CardHeader className="pb-0">

@@ -77,6 +77,88 @@ export default function Navbar() {
             <Menu className="w-6 h-6" />
           </button>
         </div>
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+            <div className="absolute top-0 left-0 w-64 h-full bg-slate-900 shadow-lg p-6">
+              {/* Close button */}
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+
+              {/* Navigation Items */}
+              <nav className="mt-8 space-y-4">
+                {navigation.map((item) => (
+                  <div key={item.name}>
+                    {item.items ? (
+                      // Dropdown for nested items
+                      <details className="group">
+                        <summary className="flex items-center justify-between cursor-pointer text-white text-lg">
+                          <span className="flex items-center gap-2">
+                            {item.icon && <item.icon className="w-5 h-5" />}
+                            <span className="text-base">{item.name}</span>
+                          </span>
+                          <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
+                        </summary>
+                        <div className="mt-2 space-y-2 pl-4">
+                          {item.items.map((subItem) => (
+                            <Link
+                              key={subItem.name}
+                              href={subItem.href}
+                              className="block text-gray-300 hover:text-white"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              {subItem.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </details>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className="block text-white text-lg hover:text-emerald-400"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.icon && (
+                          <item.icon className="w-5 h-5 mr-2 inline" />
+                        )}
+                        <span className="text-base">{item.name}</span>
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </nav>
+
+              {/* Auth Buttons */}
+              <div className="mt-6">
+                <SignedIn>
+                  <MyFundsDialog />
+                  <Link href={"/portfolio"}>
+                    <Button className="w-full mt-2 bg-white text-black hover:bg-gray-200">
+                      Portfolio
+                    </Button>
+                  </Link>
+                </SignedIn>
+
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button className="block w-full text-white text-lg my-2">
+                      Sign in
+                    </button>
+                  </SignInButton>
+                  <SignInButton>
+                    <button className="block w-full text-lg px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-blue-600 text-white hover:shadow-lg transition-all">
+                      Free Trial
+                    </button>
+                  </SignInButton>
+                </SignedOut>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="hidden lg:flex lg:gap-x-8">
           {navigation.map((item) => (

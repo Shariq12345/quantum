@@ -165,7 +165,7 @@ export function MyFundsDialog() {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white border-none hover:from-emerald-700 hover:to-emerald-800 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:text-white"
+          className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white border-none hover:from-emerald-700 hover:to-emerald-800 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg hover:text-white w-full sm:w-auto"
         >
           <Wallet className="mr-2 h-4 w-4" /> My Funds
         </Button>
