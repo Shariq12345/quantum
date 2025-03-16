@@ -1,6 +1,7 @@
 import io
 import requests
 import os
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request # type: ignore
 from flask_cors import CORS
 import numpy as np
@@ -12,6 +13,8 @@ import joblib
 from ta import add_all_ta_features
 import traceback
 from polygon import RESTClient
+
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -37,8 +40,8 @@ except Exception as e:
     logger.error(traceback.format_exc())
     raise
 
+client = RESTClient(api_key=os.getenv("POLYGON_API_KEY"))
 
-client = RESTClient(api_key="jCQvtKFC39SWJprdqxyiXFpac9UHB9K1")
 
 def fetch_stock_data(symbol):
     try:

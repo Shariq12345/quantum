@@ -18,6 +18,9 @@ from ta import add_all_ta_features
 import traceback
 from polygon import RESTClient
 import matplotlib.pyplot as plt
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -43,8 +46,8 @@ except Exception as e:
     logger.info("Proceeding to train a new model.")
     model = None
 
-API_KEY = os.getenv('VANTAGE_API_KEY')
-client = RESTClient(api_key="jCQvtKFC39SWJprdqxyiXFpac9UHB9K1")
+# API_KEY = os.getenv('VANTAGE_API_KEY')
+client = RESTClient(api_key=os.getenv("POLYGON_API_KEY"))
 
 SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'AMZN']
 SEQUENCE_LENGTH = 60
