@@ -1,1 +1,2 @@
-web: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+fallocate -l 512M /tmp/swapfile && chmod 600 /tmp/swapfile && mkswap /tmp/swapfile && swapon /tmp/swapfile
+gunicorn -w 1 -k sync -b 0.0.0.0:8080 app:app

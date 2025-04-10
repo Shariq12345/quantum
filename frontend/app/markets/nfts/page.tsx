@@ -38,7 +38,7 @@ const fetchNFTData = async (id: string): Promise<NFTData | null> => {
 
   try {
     const response = await fetch(url, options);
-  const [nftData, setNftData] = useState<NFTData[]>([]);
+    if (!response.ok) throw new Error("Fetch failed");
     return await response.json();
   } catch (error) {
     console.error(`Error fetching ${id}:`, error);
@@ -82,7 +82,11 @@ export default function NFTTicker() {
                   ${nft.floor_price.usd.toFixed(2)}
                 </p>
                 <p
-                  className={`text-sm ${nft.floor_price_24h_percentage_change.usd < 0 ? "text-red-500" : "text-green-500"}`}
+                  className={`text-sm ${
+                    nft.floor_price_24h_percentage_change.usd < 0
+                      ? "text-red-500"
+                      : "text-green-500"
+                  }`}
                 >
                   {nft.floor_price_24h_percentage_change.usd.toFixed(2)}%
                 </p>

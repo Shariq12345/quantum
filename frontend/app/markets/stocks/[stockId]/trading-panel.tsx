@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +12,38 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useToast } from "@/hooks/use-toast";
+import {
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  Info,
+  LineChart,
+  Wallet,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TradingPanelProps {
   stockSymbol: string;
@@ -43,7 +70,7 @@ export default function TradingPanel({
     userId: userId ?? "",
   });
 
-  let userFunds = getFundsByUserId?.amount ?? 0;
+  const userFunds = getFundsByUserId?.amount ?? 0;
 
   const depositFunds = useMutation(api.funds.depositFunds);
 
@@ -108,7 +135,7 @@ export default function TradingPanel({
 
         toast({
           title: `Successfully bought ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
-          description: `Your new balance is $${userFunds - totalCost}`,
+          description: `Your new balance is $${(userFunds + totalCost).toFixed(2)}`,
         });
       } catch (error) {
         toast({
@@ -151,7 +178,7 @@ export default function TradingPanel({
 
         toast({
           title: `Successfully sold ${quantity} shares of ${stockSymbol} at $${price.toFixed(2)}`,
-          description: `Your new balance is $${userFunds + totalCost}`,
+          description: `Your new balance is $${(userFunds + totalCost).toFixed(2)}`,
         });
       } catch (error) {
         toast({
@@ -170,206 +197,390 @@ export default function TradingPanel({
     (orderType === "market" ? currentPrice : limitPrice || 0) * quantity
   ).toFixed(2);
 
+  const priceChange = currentPrice - openPrice;
+  const priceChangePercent = ((priceChange / openPrice) * 100).toFixed(2);
+  const isPriceUp = priceChange >= 0;
+
   return (
-    <Card className="w-full max-w-3xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 shadow-lg">
-      <CardHeader className="space-y-2">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-2xl font-bold">{stockSymbol}</CardTitle>
-            <CardDescription className="text-md">
-              Available Funds: ${userFunds.toFixed(2)}
-            </CardDescription>
-          </div>
-          <Badge variant="default" className="text-lg py-1 px-2">
-            ${currentPrice.toFixed(2)}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span className="block text-gray-500">Open</span>
-            <span className="font-semibold">${openPrice?.toFixed(2)}</span>
-          </div>
-          <div>
-            <span className="block text-gray-500">Volume</span>
-            <span className="font-semibold">{volume?.toLocaleString()}</span>
-          </div>
-        </div>
-        <Tabs defaultValue="buy" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="buy">Buy</TabsTrigger>
-            <TabsTrigger value="sell">Sell</TabsTrigger>
-          </TabsList>
-          <TabsContent value="buy">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="buy-quantity"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Quantity
-                  </label>
-                  <Input
-                    id="buy-quantity"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={quantity}
-                    onChange={handleQuantityChange}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="buy-order-type"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Order Type
-                  </label>
-                  <select
-                    id="buy-order-type"
-                    value={orderType}
-                    onChange={(e) =>
-                      setOrderType(e.target.value as "market" | "limit")
-                    }
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-600 focus:border-emerald-600 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
-                    <option value="market">Market</option>
-                    <option value="limit">Limit</option>
-                  </select>
-                </div>
+    <TooltipProvider>
+      <Card className="w-full max-w-md mx-auto border border-border/40 shadow-md bg-card">
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-2xl font-bold">
+                  {stockSymbol}
+                </CardTitle>
+                <Badge variant="outline" className="font-mono text-xs">
+                  NASDAQ
+                </Badge>
               </div>
-              {orderType === "limit" && (
-                <div>
-                  <label
-                    htmlFor="buy-limit-price"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Limit Price
-                  </label>
-                  <Input
-                    id="buy-limit-price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={limitPrice || ""}
-                    onChange={handleLimitPriceChange}
-                    className="mt-1"
-                  />
-                </div>
-              )}
-              <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-md">
-                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                  Order Summary
-                </h4>
-                <p className="text-sm text-blue-600 dark:text-blue-300">
-                  Buy {quantity} shares of {stockSymbol} at{" "}
-                  {orderType === "market" ? "market price" : `$${limitPrice}`}
-                </p>
-                <p className="text-sm text-blue-600 dark:text-blue-300">
-                  Estimated Cost: ${estimatedCost}
-                </p>
-              </div>
-              <Button
-                onClick={() => handleSubmit("buy")}
-                className="w-full"
-                disabled={
-                  quantity <= 0 ||
-                  (orderType === "limit" && (!limitPrice || limitPrice <= 0)) ||
-                  parseFloat(estimatedCost) > userFunds
-                }
-              >
-                Place Buy Order
-              </Button>
+              <CardDescription className="mt-1 flex items-center gap-1.5">
+                <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>
+                  Available: $
+                  {userFunds.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </CardDescription>
             </div>
-          </TabsContent>
-          <TabsContent value="sell">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="sell-quantity"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Quantity
-                  </label>
-                  <Input
-                    id="sell-quantity"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={quantity}
-                    onChange={handleQuantityChange}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="sell-order-type"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Order Type
-                  </label>
-                  <select
-                    id="sell-order-type"
-                    value={orderType}
-                    onChange={(e) =>
-                      setOrderType(e.target.value as "market" | "limit")
-                    }
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-600 focus:border-emerald-600 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  >
-                    <option value="market">Market</option>
-                    <option value="limit">Limit</option>
-                  </select>
-                </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">
+                ${currentPrice.toFixed(2)}
               </div>
-              {orderType === "limit" && (
-                <div>
-                  <label
-                    htmlFor="sell-limit-price"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Limit Price
-                  </label>
-                  <Input
-                    id="sell-limit-price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={limitPrice || ""}
-                    onChange={handleLimitPriceChange}
-                    className="mt-1"
-                  />
-                </div>
-              )}
-              <div className="bg-red-50 dark:bg-red-900 p-4 rounded-md">
-                <h4 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">
-                  Order Summary
-                </h4>
-                <p className="text-sm text-red-600 dark:text-red-300">
-                  Sell {quantity} shares of {stockSymbol} at{" "}
-                  {orderType === "market" ? "market price" : `$${limitPrice}`}
-                </p>
-                <p className="text-sm text-red-600 dark:text-red-300">
-                  Estimated Proceeds: ${estimatedCost}
-                </p>
-              </div>
-              <Button
-                onClick={() => handleSubmit("sell")}
-                className="w-full bg-red-500 hover:bg-red-600"
-                disabled={
-                  quantity <= 0 ||
-                  (orderType === "limit" && (!limitPrice || limitPrice <= 0))
-                }
+              <div
+                className={`flex items-center justify-end gap-1 text-sm ${isPriceUp ? "text-emerald-500" : "text-rose-500"}`}
               >
-                Place Sell Order
-              </Button>
+                {isPriceUp ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+                <span>${Math.abs(priceChange).toFixed(2)}</span>
+                <span>({priceChangePercent}%)</span>
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </div>
+        </CardHeader>
+
+        <Separator />
+
+        <CardContent className="pt-4 pb-0">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-muted/40 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                <BarChart3 className="h-3.5 w-3.5" />
+                Open Price
+              </div>
+              <div className="font-medium">${openPrice.toFixed(2)}</div>
+            </div>
+            <div className="bg-muted/40 rounded-lg p-3">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                <LineChart className="h-3.5 w-3.5" />
+                Volume
+              </div>
+              <div className="font-medium">{volume.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <Tabs defaultValue="buy" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger
+                value="buy"
+                className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+              >
+                <ArrowDown className="h-4 w-4 mr-1.5" />
+                Buy
+              </TabsTrigger>
+              <TabsTrigger
+                value="sell"
+                className="data-[state=active]:bg-rose-500 data-[state=active]:text-white"
+              >
+                <ArrowUp className="h-4 w-4 mr-1.5" />
+                Sell
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="buy">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="buy-quantity"
+                        className="text-sm font-medium"
+                      >
+                        Quantity
+                      </label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs">Number of shares to buy</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="buy-quantity"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={quantity}
+                      onChange={handleQuantityChange}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="buy-order-type"
+                        className="text-sm font-medium"
+                      >
+                        Order Type
+                      </label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs">
+                            Market: current price, Limit: specified price
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Select
+                      value={orderType}
+                      onValueChange={(value) =>
+                        setOrderType(value as "market" | "limit")
+                      }
+                    >
+                      <SelectTrigger id="buy-order-type" className="h-9">
+                        <SelectValue placeholder="Select order type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="market">Market</SelectItem>
+                        <SelectItem value="limit">Limit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {orderType === "limit" && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="buy-limit-price"
+                        className="text-sm font-medium"
+                      >
+                        Limit Price
+                      </label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs">
+                            Maximum price you're willing to pay per share
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="buy-limit-price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={limitPrice || ""}
+                      onChange={handleLimitPriceChange}
+                      className="h-9"
+                    />
+                  </div>
+                )}
+
+                <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 rounded-lg p-3">
+                  <h4 className="text-sm font-medium text-emerald-800 dark:text-emerald-300 mb-2 flex items-center gap-1.5">
+                    <DollarSign className="h-4 w-4" />
+                    Order Summary
+                  </h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                      <span>Action:</span>
+                      <span className="font-medium">Buy {stockSymbol}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                      <span>Quantity:</span>
+                      <span className="font-medium">{quantity} shares</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                      <span>Price:</span>
+                      <span className="font-medium">
+                        {orderType === "market"
+                          ? `$${currentPrice.toFixed(2)} (Market)`
+                          : `$${limitPrice?.toFixed(2) || 0} (Limit)`}
+                      </span>
+                    </div>
+                    <Separator className="my-1.5 bg-emerald-100 dark:bg-emerald-800" />
+                    <div className="flex justify-between font-medium text-emerald-800 dark:text-emerald-300">
+                      <span>Estimated Cost:</span>
+                      <span>${estimatedCost}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="sell">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="sell-quantity"
+                        className="text-sm font-medium"
+                      >
+                        Quantity
+                      </label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs">Number of shares to sell</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="sell-quantity"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={quantity}
+                      onChange={handleQuantityChange}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="sell-order-type"
+                        className="text-sm font-medium"
+                      >
+                        Order Type
+                      </label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs">
+                            Market: current price, Limit: specified price
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Select
+                      value={orderType}
+                      onValueChange={(value) =>
+                        setOrderType(value as "market" | "limit")
+                      }
+                    >
+                      <SelectTrigger id="sell-order-type" className="h-9">
+                        <SelectValue placeholder="Select order type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="market">Market</SelectItem>
+                        <SelectItem value="limit">Limit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {orderType === "limit" && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="sell-limit-price"
+                        className="text-sm font-medium"
+                      >
+                        Limit Price
+                      </label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-xs">
+                            Minimum price you're willing to accept per share
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="sell-limit-price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={limitPrice || ""}
+                      onChange={handleLimitPriceChange}
+                      className="h-9"
+                    />
+                  </div>
+                )}
+
+                <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900 rounded-lg p-3">
+                  <h4 className="text-sm font-medium text-rose-800 dark:text-rose-300 mb-2 flex items-center gap-1.5">
+                    <DollarSign className="h-4 w-4" />
+                    Order Summary
+                  </h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between text-rose-700 dark:text-rose-400">
+                      <span>Action:</span>
+                      <span className="font-medium">Sell {stockSymbol}</span>
+                    </div>
+                    <div className="flex justify-between text-rose-700 dark:text-rose-400">
+                      <span>Quantity:</span>
+                      <span className="font-medium">{quantity} shares</span>
+                    </div>
+                    <div className="flex justify-between text-rose-700 dark:text-rose-400">
+                      <span>Price:</span>
+                      <span className="font-medium">
+                        {orderType === "market"
+                          ? `$${currentPrice.toFixed(2)} (Market)`
+                          : `$${limitPrice?.toFixed(2) || 0} (Limit)`}
+                      </span>
+                    </div>
+                    <Separator className="my-1.5 bg-rose-100 dark:bg-rose-800" />
+                    <div className="flex justify-between font-medium text-rose-800 dark:text-rose-300">
+                      <span>Estimated Proceeds:</span>
+                      <span>${estimatedCost}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+
+        <CardFooter className="pt-4">
+          {orderType === "market" ||
+          (orderType === "limit" && limitPrice && limitPrice > 0) ? (
+            <Tabs defaultValue="buy">
+              <TabsContent value="buy">
+                <Button
+                  onClick={() => handleSubmit("buy")}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={
+                    quantity <= 0 ||
+                    (orderType === "limit" &&
+                      (!limitPrice || limitPrice <= 0)) ||
+                    Number.parseFloat(estimatedCost) > userFunds
+                  }
+                >
+                  <DollarSign className="h-4 w-4 mr-1.5" />
+                  Place Buy Order
+                </Button>
+              </TabsContent>
+              <TabsContent value="sell">
+                <Button
+                  onClick={() => handleSubmit("sell")}
+                  className="w-full bg-rose-600 hover:bg-rose-700 text-white"
+                  disabled={
+                    quantity <= 0 ||
+                    (orderType === "limit" && (!limitPrice || limitPrice <= 0))
+                  }
+                >
+                  <DollarSign className="h-4 w-4 mr-1.5" />
+                  Place Sell Order
+                </Button>
+              </TabsContent>
+            </Tabs>
+          ) : null}
+        </CardFooter>
+      </Card>
+    </TooltipProvider>
   );
 }

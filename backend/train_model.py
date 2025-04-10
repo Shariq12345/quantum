@@ -54,7 +54,7 @@ SEQUENCE_LENGTH = 60
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 
-def fetch_stock_data(symbol, start_date="2020-01-01", end_date="2025-01-08"):
+def fetch_stock_data(symbol, start_date="2020-01-01", end_date="2025-01-08"): #noqa
     try:
         aggs = client.get_aggs(
             ticker=symbol,
