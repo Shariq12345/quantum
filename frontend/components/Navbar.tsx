@@ -266,7 +266,7 @@ export default function Navbar() {
             >
               <Link
                 href={item.href || "#"}
-                className={`flex items-center gap-1 text-sm font-medium transition-colors mr-2 ${
+                className={`flex items-center gap-1 text-sm font-medium transition-colors ${
                   isActive(item.href || "#")
                     ? "text-white"
                     : "text-gray-300 hover:text-white"

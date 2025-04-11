@@ -19,6 +19,7 @@ import traceback
 from polygon import RESTClient
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 load_dotenv()
 
@@ -171,6 +172,7 @@ def linear_regression_forecast(data):
 def backtest_model(model, X_test, y_test, price_scaler):
     # Get predictions from the model
     predictions = model.predict(X_test)
+
     # Create padded arrays to inverse transform the 'close' prices
     padded_predictions = np.zeros((len(predictions), 4))
     padded_actual = np.zeros((len(y_test), 4))
@@ -180,21 +182,31 @@ def backtest_model(model, X_test, y_test, price_scaler):
     inversed_predictions = price_scaler.inverse_transform(padded_predictions)[:, 3]
     inversed_actual = price_scaler.inverse_transform(padded_actual)[:, 3]
 
-    mae = np.mean(np.abs(inversed_predictions - inversed_actual))
-    mse = np.mean((inversed_predictions - inversed_actual) ** 2)
-    
-    # Plot the results
-    plt.figure(figsize=(12, 6))
-    plt.plot(inversed_actual, label="Actual Price")
-    plt.plot(inversed_predictions, label="Predicted Price")
+    # Compute metrics
+    mae = mean_absolute_error(inversed_actual, inversed_predictions)
+    mse = mean_squared_error(inversed_actual, inversed_predictions)
+    rmse = np.sqrt(mse)
+    r2 = r2_score(inversed_actual, inversed_predictions)
+
+    # Plot
+    plt.figure(figsize=(14, 7))
+    plt.plot(inversed_actual, label="Actual Price", color="blue")
+    plt.plot(inversed_predictions, label="Predicted Price", color="orange")
     plt.xlabel("Time Steps")
     plt.ylabel("Price")
     plt.title("Backtest: Actual vs Predicted Price")
+
+    # Add metrics to plot
+    stats_text = f"MAE: {mae:.2f}  |  RMSE: {rmse:.2f}  |  R²: {r2:.2f}"
+    plt.text(0.01, 0.02, stats_text, transform=plt.gca().transAxes,
+             fontsize=12, bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray'))
+
     plt.legend()
-    plt.savefig("backtest_plot.png")
+    plt.tight_layout()
+    plt.savefig("backtest_plot.png", dpi=300)
     plt.close()
 
-    logger.info(f"Backtesting completed: MAE={mae:.2f}, MSE={mse:.2f}. Plot saved as backtest_plot.png")
+    logger.info(f"Backtesting completed: MAE={mae:.2f}, MSE={mse:.2f}, R²={r2:.2f}. Plot saved as backtest_plot.png")
     return mae, mse
 
 def main():
